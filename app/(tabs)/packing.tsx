@@ -1,13 +1,13 @@
 import { StyleSheet, View, Text } from 'react-native';
 import { Colors } from '../../constants/theme';
-import { LayoutDashboard } from 'lucide-react-native';
+import { Backpack } from 'lucide-react-native';
 
-export default function DashboardScreen() {
+export default function PackingScreen() {
   return (
     <View style={styles.container}>
-      <LayoutDashboard color={Colors.dark.primary} size={48} />
-      <Text style={styles.title}>ダッシュボード</Text>
-      <Text style={styles.subtitle}>直近の釣行やアラートがここに表示されます</Text>
+      <Backpack color={Colors.dark.primary} size={48} />
+      <Text style={styles.title}>AI パッキング提案</Text>
+      <Text style={styles.subtitle}>近日実装予定</Text>
     </View>
   );
 }

@@ -1,33 +1,51 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '../../constants/theme';
+import { LayoutDashboard, Box, Backpack, Wrench } from 'lucide-react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarActiveTintColor: Colors.dark.primary,
+        tabBarInactiveTintColor: Colors.dark.tabIconDefault,
+        tabBarStyle: {
+          backgroundColor: Colors.dark.surface,
+          borderTopColor: Colors.dark.border,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        headerStyle: {
+          backgroundColor: Colors.dark.background,
+        },
+        headerTintColor: Colors.dark.text,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'ホーム',
+          tabBarIcon: ({ color }) => <LayoutDashboard color={color} size={24} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="inventory"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: '在庫管理',
+          tabBarIcon: ({ color }) => <Box color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="packing"
+        options={{
+          title: 'パッキング',
+          tabBarIcon: ({ color }) => <Backpack color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="tools"
+        options={{
+          title: 'ツール',
+          tabBarIcon: ({ color }) => <Wrench color={color} size={24} />,
         }}
       />
     </Tabs>

@@ -1,13 +1,13 @@
 import { StyleSheet, View, Text } from 'react-native';
 import { Colors } from '../../constants/theme';
-import { LayoutDashboard } from 'lucide-react-native';
+import { Wrench } from 'lucide-react-native';
 
-export default function DashboardScreen() {
+export default function ToolsScreen() {
   return (
     <View style={styles.container}>
-      <LayoutDashboard color={Colors.dark.primary} size={48} />
-      <Text style={styles.title}>ダッシュボード</Text>
-      <Text style={styles.subtitle}>直近の釣行やアラートがここに表示されます</Text>
+      <Wrench color={Colors.dark.primary} size={48} />
+      <Text style={styles.title}>単位変換＆ツール</Text>
+      <Text style={styles.subtitle}>近日実装予定</Text>
     </View>
   );
 }

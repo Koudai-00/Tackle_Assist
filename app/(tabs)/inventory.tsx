@@ -1,13 +1,13 @@
 import { StyleSheet, View, Text } from 'react-native';
 import { Colors } from '../../constants/theme';
-import { LayoutDashboard } from 'lucide-react-native';
+import { Box } from 'lucide-react-native';
 
-export default function DashboardScreen() {
+export default function InventoryScreen() {
   return (
     <View style={styles.container}>
-      <LayoutDashboard color={Colors.dark.primary} size={48} />
-      <Text style={styles.title}>ダッシュボード</Text>
-      <Text style={styles.subtitle}>直近の釣行やアラートがここに表示されます</Text>
+      <Box color={Colors.dark.primary} size={48} />
+      <Text style={styles.title}>在庫一覧（タックルボックス）</Text>
+      <Text style={styles.subtitle}>近日実装予定</Text>
     </View>
   );
 }
