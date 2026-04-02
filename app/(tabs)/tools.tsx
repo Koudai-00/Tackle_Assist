@@ -3,8 +3,66 @@ import { StyleSheet, View, Text, TextInput, ScrollView, TouchableOpacity, Keyboa
 import { Colors } from '../../constants/theme';
 import { Anchor, Weight, Ruler, ChevronDown, Edit2, List } from 'lucide-react-native';
 
-const NYLON_OPTIONS = [0.25, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.2, 1.5, 1.75, 2, 2.25, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20];
-const PE_OPTIONS = [0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+interface LineData {
+  gou: number;
+  kg: number;
+  lb: number;
+  mm: number;
+  d?: number;
+}
+
+const NYLON_TABLE: LineData[] = [
+  { gou: 0.25, kg: 0.454, lb: 1, mm: 0.083 },
+  { gou: 0.3, kg: 0.544, lb: 1.2, mm: 0.090 },
+  { gou: 0.4, kg: 0.726, lb: 1.6, mm: 0.104 },
+  { gou: 0.6, kg: 1.089, lb: 2.4, mm: 0.128 },
+  { gou: 0.8, kg: 1.361, lb: 3, mm: 0.148 },
+  { gou: 1, kg: 1.814, lb: 4, mm: 0.165 },
+  { gou: 1.2, kg: 2.177, lb: 4.8, mm: 0.185 },
+  { gou: 1.5, kg: 2.722, lb: 6, mm: 0.205 },
+  { gou: 1.75, kg: 3.175, lb: 7, mm: 0.220 },
+  { gou: 2, kg: 3.629, lb: 8, mm: 0.235 },
+  { gou: 2.25, kg: 4.082, lb: 9, mm: 0.248 },
+  { gou: 2.5, kg: 4.536, lb: 10, mm: 0.260 },
+  { gou: 2.75, kg: 4.990, lb: 11, mm: 0.274 },
+  { gou: 3, kg: 5.443, lb: 12, mm: 0.285 },
+  { gou: 3.5, kg: 6.350, lb: 14, mm: 0.310 },
+  { gou: 4, kg: 7.257, lb: 16, mm: 0.330 },
+  { gou: 5, kg: 9.072, lb: 20, mm: 0.370 },
+  { gou: 6, kg: 9.979, lb: 22, mm: 0.405 },
+  { gou: 7, kg: 11.340, lb: 25, mm: 0.435 },
+  { gou: 8, kg: 12.701, lb: 28, mm: 0.470 },
+  { gou: 10, kg: 15.876, lb: 35, mm: 0.520 },
+  { gou: 12, kg: 18.144, lb: 40, mm: 0.570 },
+  { gou: 14, kg: 20.412, lb: 45, mm: 0.620 },
+  { gou: 16, kg: 22.680, lb: 50, mm: 0.660 },
+  { gou: 18, kg: 24.948, lb: 55, mm: 0.700 },
+  { gou: 20, kg: 27.216, lb: 60, mm: 0.740 },
+];
+
+const PE_TABLE: LineData[] = [
+  { gou: 0.1, kg: 1.814, lb: 4, mm: 0.054, d: 20 },
+  { gou: 0.15, kg: 2.043, lb: 4.5, mm: 0.066, d: 30 },
+  { gou: 0.2, kg: 2.270, lb: 5, mm: 0.076, d: 40 },
+  { gou: 0.3, kg: 2.722, lb: 6, mm: 0.094, d: 60 },
+  { gou: 0.4, kg: 3.629, lb: 8, mm: 0.108, d: 80 },
+  { gou: 0.5, kg: 4.536, lb: 10, mm: 0.121, d: 100 },
+  { gou: 0.6, kg: 5.443, lb: 12, mm: 0.132, d: 120 },
+  { gou: 0.8, kg: 7.257, lb: 16, mm: 0.153, d: 160 },
+  { gou: 1, kg: 9.072, lb: 20, mm: 0.171, d: 200 },
+  { gou: 1.2, kg: 10.896, lb: 24, mm: 0.191, d: 240 },
+  { gou: 1.5, kg: 13.620, lb: 30, mm: 0.209, d: 300 },
+  { gou: 1.7, kg: 15.436, lb: 34, mm: 0.219, d: 340 },
+  { gou: 2, kg: 18.160, lb: 40, mm: 0.242, d: 400 },
+  { gou: 2.5, kg: 22.700, lb: 50, mm: 0.270, d: 500 },
+  { gou: 3, kg: 24.970, lb: 55, mm: 0.296, d: 600 },
+  { gou: 4, kg: 27.240, lb: 60, mm: 0.342, d: 800 },
+  { gou: 5, kg: 36.320, lb: 80, mm: 0.382, d: 1000 },
+  { gou: 6, kg: 40.860, lb: 90, mm: 0.418, d: 1200 },
+  { gou: 8, kg: 45.400, lb: 100, mm: 0.483, d: 1600 },
+  { gou: 10, kg: 59.020, lb: 130, mm: 0.540, d: 2000 },
+];
+
 const OMORI_OPTIONS = [0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 100, 120, 150];
 const GAMADAMA_OPTIONS = [
   { label: 'G8', value: 0.07 }, { label: 'G7', value: 0.09 }, { label: 'G6', value: 0.12 }, { label: 'G5', value: 0.16 },
@@ -33,15 +91,6 @@ const FT_OPTIONS = Array.from({ length: (13 - 5 + 1) * 12 }, (_, i) => {
   return `${ft}.${inch}`;
 });
 
-const NYLON_LB_MAP: Record<number, number> = {
-  0.25: 1, 0.3: 1.2, 0.4: 1.5, 0.5: 2, 0.6: 2.5, 0.8: 3, 1: 4, 1.2: 5, 1.5: 6, 1.75: 7, 2: 8, 2.25: 9, 2.5: 10,
-  3: 12, 3.5: 14, 4: 16, 5: 20, 6: 25, 7: 30, 8: 35, 10: 40, 12: 50, 14: 60, 16: 70, 18: 80, 20: 90
-};
-const PE_LB_MAP: Record<number, number> = {
-  0.1: 2, 0.15: 3, 0.2: 4, 0.3: 6, 0.4: 8, 0.5: 10, 0.6: 12, 0.8: 16, 1: 20, 1.2: 24, 1.5: 30, 
-  2: 40, 2.5: 50, 3: 60, 4: 80, 5: 100, 6: 120, 8: 150, 10: 200
-};
-
 const CATEGORIES = [
   { id: 'line_fluoro', title: 'ライン (ナイロンなど)' },
   { id: 'line_pe', title: 'ライン (PE)' },
@@ -49,15 +98,18 @@ const CATEGORIES = [
   { id: 'length', title: '長さ' }
 ];
 
-function CustomPicker({ value, options, onSelect, suffix = '' }: any) {
+function CustomPicker({ value, options, onSelect, suffix = '', compact = false }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   return (
     <>
-      <TouchableOpacity style={styles.pickerButton} onPress={() => setModalVisible(true)}>
-        <Text style={styles.pickerButtonText}>
-          {typeof value === 'object' ? value.label : value}{suffix}
+      <TouchableOpacity 
+        style={[styles.pickerButton, compact && styles.pickerButtonCompact]} 
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={[styles.pickerButtonText, compact && styles.pickerButtonTextCompact]}>
+          {typeof value === 'object' ? value.label : `${value}${suffix}`}
         </Text>
-        <ChevronDown color={Colors.dark.icon} size={20} />
+        <ChevronDown color={Colors.dark.icon} size={compact ? 16 : 20} />
       </TouchableOpacity>
 
       <Modal visible={modalVisible} transparent animationType="fade">
@@ -73,7 +125,7 @@ function CustomPicker({ value, options, onSelect, suffix = '' }: any) {
                   onPress={() => { onSelect(item); setModalVisible(false); }}
                 >
                   <Text style={styles.modalItemText}>
-                    {typeof item === 'object' ? item.label : item}{suffix}
+                    {typeof item === 'object' ? item.label : `${item}${suffix}`}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -88,23 +140,70 @@ function CustomPicker({ value, options, onSelect, suffix = '' }: any) {
   );
 }
 
+function ResultRow({ label, value, unit, options, onSelect }: { label: string, value: string | number, unit: string, options?: any[], onSelect?: (item: any) => void }) {
+  return (
+    <View style={styles.resultRow}>
+      <Text style={styles.resultLabel}>・{label}</Text>
+      <View style={styles.resultValueContainer}>
+        {onSelect && options ? (
+          <View style={{ width: 100 }}>
+            <CustomPicker 
+              value={value} 
+              options={options} 
+              onSelect={onSelect} 
+              suffix={` ${unit}`}
+              compact
+            />
+          </View>
+        ) : (
+          <>
+            <Text style={styles.resultValueText}>{value}</Text>
+            <Text style={styles.resultUnitText}>{unit}</Text>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
+
 function LineFluoroSection() {
-  const [gou, setGou] = useState(1);
-  const lb = NYLON_LB_MAP[gou] || gou * 4;
-  const kg = lb * 0.453592;
-  const mm = Math.sqrt(gou) * 0.165;
+  const [selectedIdx, setSelectedIdx] = useState(5); // Default to 1号
+  const current = NYLON_TABLE[selectedIdx] || NYLON_TABLE[0];
+
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}><Anchor color={Colors.dark.primary} size={24} /><Text style={styles.cardTitle}>ナイロン・フロロ・エステル</Text></View>
       <View style={styles.subCard}>
-        <View style={styles.row}>
-          <Text style={styles.label}>号数</Text>
-          <View style={{ width: 140 }}><CustomPicker value={gou} options={NYLON_OPTIONS} onSelect={setGou} suffix=" 号" /></View>
-        </View>
-        <View style={styles.resultGrid}>
-          <View style={styles.resultBox}><Text style={styles.resultValue}>{lb.toFixed(1)}</Text><Text style={styles.resultUnit}>lb (ポンド)</Text></View>
-          <View style={styles.resultBox}><Text style={styles.resultValue}>{kg.toFixed(2)}</Text><Text style={styles.resultUnit}>kg</Text></View>
-          <View style={styles.resultBox}><Text style={styles.resultValue}>{mm.toFixed(3)}</Text><Text style={styles.resultUnit}>mm</Text></View>
+        <Text style={styles.hintText}>数値をタップして項目を変更できます</Text>
+        <View style={styles.resultList}>
+          <ResultRow 
+            label="号数" 
+            value={current.gou} 
+            unit="号" 
+            options={NYLON_TABLE.map((item, idx) => ({ label: `${item.gou}号`, value: idx }))}
+            onSelect={(item) => setSelectedIdx(item.value)}
+          />
+          <ResultRow 
+            label="lb" 
+            value={current.lb.toFixed(1)} 
+            unit="lb" 
+            options={NYLON_TABLE.map((item, idx) => ({ label: `${item.lb.toFixed(1)}lb`, value: idx }))}
+            onSelect={(item) => setSelectedIdx(item.value)}
+          />
+          <ResultRow 
+            label="標準直径" 
+            value={current.mm.toFixed(3)} 
+            unit="mm" 
+            options={NYLON_TABLE.map((item, idx) => ({ label: `${item.mm.toFixed(3)}mm`, value: idx }))}
+            onSelect={(item) => setSelectedIdx(item.value)}
+          />
+          <ResultRow 
+            label="強度" 
+            value={current.kg.toFixed(3)} 
+            unit="kg" 
+            options={NYLON_TABLE.map((item, idx) => ({ label: `${item.kg.toFixed(3)}kg`, value: idx }))}
+            onSelect={(item) => setSelectedIdx(item.value)}
+          />
         </View>
       </View>
     </View>
@@ -112,24 +211,50 @@ function LineFluoroSection() {
 }
 
 function LinePeSection() {
-  const [gou, setGou] = useState(0.8);
-  const lb = PE_LB_MAP[gou] || gou * 20;
-  const kg = lb * 0.453592;
-  const mm = Math.sqrt(gou) * 0.17;
-  const d = Math.round(gou * 200);
+  const [selectedIdx, setSelectedIdx] = useState(8); // Default to 1号
+  const current = PE_TABLE[selectedIdx] || PE_TABLE[0];
+
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}><Anchor color={Colors.dark.primary} size={24} /><Text style={styles.cardTitle}>PEライン</Text></View>
       <View style={styles.subCard}>
-        <View style={styles.row}>
-          <Text style={styles.label}>号数</Text>
-          <View style={{ width: 140 }}><CustomPicker value={gou} options={PE_OPTIONS} onSelect={setGou} suffix=" 号" /></View>
-        </View>
-        <View style={styles.resultGrid}>
-          <View style={styles.resultBox}><Text style={styles.resultValue}>{lb.toFixed(1)}</Text><Text style={styles.resultUnit}>lb (ポンド)</Text></View>
-          <View style={styles.resultBox}><Text style={styles.resultValue}>{kg.toFixed(2)}</Text><Text style={styles.resultUnit}>kg</Text></View>
-          <View style={styles.resultBox}><Text style={styles.resultValue}>{mm.toFixed(3)}</Text><Text style={styles.resultUnit}>mm (太さ)</Text></View>
-          <View style={styles.resultBox}><Text style={styles.resultValue}>{d}</Text><Text style={styles.resultUnit}>d (デニール)</Text></View>
+        <Text style={styles.hintText}>数値をタップして項目を変更できます</Text>
+        <View style={styles.resultList}>
+          <ResultRow 
+            label="号数" 
+            value={current.gou} 
+            unit="号" 
+            options={PE_TABLE.map((item, idx) => ({ label: `${item.gou}号`, value: idx }))}
+            onSelect={(item) => setSelectedIdx(item.value)}
+          />
+          <ResultRow 
+            label="lb" 
+            value={current.lb.toFixed(1)} 
+            unit="lb" 
+            options={PE_TABLE.map((item, idx) => ({ label: `${item.lb.toFixed(1)}lb`, value: idx }))}
+            onSelect={(item) => setSelectedIdx(item.value)}
+          />
+          <ResultRow 
+            label="標準直径" 
+            value={current.mm.toFixed(3)} 
+            unit="mm" 
+            options={PE_TABLE.map((item, idx) => ({ label: `${item.mm.toFixed(3)}mm`, value: idx }))}
+            onSelect={(item) => setSelectedIdx(item.value)}
+          />
+          <ResultRow 
+            label="強度" 
+            value={current.kg.toFixed(3)} 
+            unit="kg" 
+            options={PE_TABLE.map((item, idx) => ({ label: `${item.kg.toFixed(3)}kg`, value: idx }))}
+            onSelect={(item) => setSelectedIdx(item.value)}
+          />
+          <ResultRow 
+            label="デニール" 
+            value={current.d || 0} 
+            unit="d" 
+            options={PE_TABLE.map((item, idx) => ({ label: `${item.d}d`, value: idx }))}
+            onSelect={(item) => setSelectedIdx(item.value)}
+          />
         </View>
       </View>
     </View>
@@ -245,12 +370,19 @@ const styles = StyleSheet.create({
   subCardTitle: { color: Colors.dark.secondary, fontSize: 14, fontWeight: '600', marginBottom: 12 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   label: { color: Colors.dark.text, fontSize: 16, fontWeight: '600' },
-  resultGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 },
+  resultList: { marginTop: 16, backgroundColor: Colors.dark.background, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: Colors.dark.border },
+  resultRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  resultLabel: { color: Colors.dark.text, fontSize: 16, fontWeight: '500' },
+  resultValueContainer: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  resultValueText: { color: Colors.dark.primary, fontSize: 20, fontWeight: 'bold' },
+  resultUnitText: { color: Colors.dark.icon, fontSize: 14 },
   resultBox: { width: '48%', backgroundColor: Colors.dark.background, padding: 12, borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: Colors.dark.border },
   resultValue: { color: Colors.dark.primary, fontSize: 20, fontWeight: 'bold', marginBottom: 4 },
   resultUnit: { color: Colors.dark.icon, fontSize: 12 },
   pickerButton: { flexDirection: 'row', backgroundColor: Colors.dark.background, borderWidth: 1, borderColor: Colors.dark.border, borderRadius: 8, padding: 12, alignItems: 'center', justifyContent: 'space-between' },
+  pickerButtonCompact: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 6 },
   pickerButtonText: { color: Colors.dark.text, fontSize: 16, fontWeight: '600' },
+  pickerButtonTextCompact: { fontSize: 14, color: Colors.dark.primary },
   modeToggle: { padding: 8 },
   textInput: { flex: 1, backgroundColor: Colors.dark.background, borderWidth: 1, borderColor: Colors.dark.border, borderRadius: 8, color: Colors.dark.text, fontSize: 16, paddingHorizontal: 12, paddingVertical: 10, textAlign: 'center' },
   equals: { paddingHorizontal: 12 },

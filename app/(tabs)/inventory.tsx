@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator, 
 import { useFocusEffect, useRouter, Tabs, Link } from 'expo-router';
 import { Colors } from '../../constants/theme';
 import { useIdentity } from '../../hooks/useIdentity';
-import { Search, Plus, Minus, Settings, Trash2, ShieldCheck, Box, PackageOpen, ShoppingCart } from 'lucide-react-native';
+import { Search, Plus, Minus, Trash2, ShieldCheck, Box, PackageOpen, ShoppingCart, Settings } from 'lucide-react-native';
 import DropdownBtn from '../components/DropdownBtn';
 
 const CATEGORIES = [
@@ -93,7 +93,7 @@ export default function InventoryScreen() {
     }
     // date はもとからサーバー側で降順になっている
     return list;
-  }, [items, searchQuery, activeCategory, sortBy]);
+  }, [items, searchQuery, activeCategory, activeLocation, sortBy]);
 
   const openDecreaseModal = (item: any) => {
     setTargetItem(item);
@@ -152,8 +152,23 @@ export default function InventoryScreen() {
   const renderItem = ({ item }: { item: any }) => {
     const isOutOfStock = item.quantity === 0;
 
+    const openDetail = () => {
+      router.push({
+        pathname: '/inventory-detail' as any,
+        params: {
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          quantity: String(item.quantity),
+          locationTag: item.locationTag || '',
+          imageUrl: item.imageUrl || '',
+          barcode: item.barcode || '',
+        },
+      });
+    };
+
     return (
-      <View style={[styles.card, isOutOfStock && styles.cardOutOfStock]}>
+      <TouchableOpacity style={[styles.card, isOutOfStock && styles.cardOutOfStock]} onPress={openDetail} activeOpacity={0.7}>
         {item.imageUrl ? (
           <Image source={{ uri: item.imageUrl }} style={styles.itemImage} resizeMode="cover" />
         ) : (
@@ -180,18 +195,15 @@ export default function InventoryScreen() {
           <View style={styles.actionsRow}>
             <TouchableOpacity 
               style={[styles.actionBtn, isOutOfStock && styles.actionBtnDisabled]} 
-              onPress={() => openDecreaseModal(item)}
+              onPress={(e) => { e.stopPropagation(); openDecreaseModal(item); }}
               disabled={isOutOfStock}
             >
               <Trash2 color={Colors.dark.icon} size={16} />
               <Text style={styles.actionBtnText}>消費/ロスト</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => router.push(`/inventory-add?edit=${item.id}`)}>
-              <Settings color={Colors.dark.icon} size={16} />
-            </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -219,10 +231,10 @@ export default function InventoryScreen() {
           )
         }} 
       />
-      {/* 検索・フィルター領域 */}
+      {/* 検索・フィルター領域（コンパクト） */}
       <View style={styles.headerSection}>
         <View style={styles.searchBar}>
-          <Search color={Colors.dark.icon} size={20} />
+          <Search color={Colors.dark.icon} size={16} />
           <TextInput
             style={styles.searchInput}
             placeholder="タックル名・保管場所で検索"
@@ -236,13 +248,11 @@ export default function InventoryScreen() {
           <View style={{ flex: 1 }}>
             <DropdownBtn options={CATEGORIES} selectedValue={activeCategory} onSelect={setActiveCategory} label="カテゴリ" />
           </View>
-          <View style={{ width: 12 }} />
+          <View style={{ width: 6 }} />
           <View style={{ flex: 1 }}>
             <DropdownBtn options={locationOptions} selectedValue={activeLocation} onSelect={setActiveLocation} label="保管場所" />
           </View>
-        </View>
-
-        <View style={styles.dropdownRow}>
+          <View style={{ width: 6 }} />
           <View style={{ flex: 1 }}>
             <DropdownBtn options={SORT_OPTIONS} selectedValue={sortBy} onSelect={setSortBy} label="並び替え" />
           </View>
@@ -322,16 +332,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   
-  headerSection: { padding: 16, paddingTop: 8, backgroundColor: Colors.dark.background, zIndex: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.surface, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.border, marginBottom: 16 },
-  searchInput: { flex: 1, marginLeft: 12, color: Colors.dark.text, fontSize: 16 },
+  headerSection: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 8, backgroundColor: Colors.dark.background, zIndex: 10, borderBottomWidth: 1, borderColor: Colors.dark.border },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.surface, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: Colors.dark.border, marginBottom: 8 },
+  searchInput: { flex: 1, marginLeft: 8, color: Colors.dark.text, fontSize: 14 },
   dropdownRow: { flexDirection: 'row', width: '100%' },
 
-  listContainer: { padding: 16, paddingBottom: 100 },
-  card: { flexDirection: 'row', backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: Colors.dark.border },
+  listContainer: { padding: 12, paddingBottom: 100 },
+  card: { flexDirection: 'row', backgroundColor: Colors.dark.surface, borderRadius: 12, padding: 10, marginBottom: 8, borderWidth: 1, borderColor: Colors.dark.border },
   cardOutOfStock: { borderColor: Colors.dark.danger, backgroundColor: 'rgba(239, 68, 68, 0.05)' },
-  itemImage: { width: 80, height: 80, borderRadius: 12, backgroundColor: '#000' },
-  imagePlaceholder: { width: 80, height: 80, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
+  itemImage: { width: 64, height: 64, borderRadius: 10, backgroundColor: '#000' },
+  imagePlaceholder: { width: 64, height: 64, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
   
   cardContent: { flex: 1, marginLeft: 16, justifyContent: 'space-between' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },

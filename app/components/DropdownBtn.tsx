@@ -64,10 +64,10 @@ export default function DropdownBtn({ options, selectedValue, onSelect, placehol
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 12 },
-  label: { fontSize: 13, color: Colors.dark.icon, marginBottom: 4 },
-  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 },
-  btnText: { color: Colors.dark.text, fontSize: 16 },
+  container: { marginBottom: 0 },
+  label: { fontSize: 11, color: Colors.dark.icon, marginBottom: 2 },
+  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: Colors.dark.surface, borderWidth: 1, borderColor: Colors.dark.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
+  btnText: { color: Colors.dark.text, fontSize: 13, flex: 1 },
   
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
   modalContent: { backgroundColor: Colors.dark.background, borderRadius: 16, borderWidth: 1, borderColor: Colors.dark.border, overflow: 'hidden' },

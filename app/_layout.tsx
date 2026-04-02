@@ -73,6 +73,16 @@ export default function RootLayout() {
           })} 
         />
         <Stack.Screen 
+          name="inventory-detail" 
+          options={({ navigation }) => ({ 
+            presentation: 'modal', 
+            title: 'タックル詳細', 
+            headerStyle: { backgroundColor: Colors.dark.surface }, 
+            headerTintColor: Colors.dark.text,
+            headerRight: () => renderCloseButton(navigation)
+          })} 
+        />
+        <Stack.Screen 
           name="ai-packing" 
           options={({ navigation }) => ({ 
             presentation: 'modal', 

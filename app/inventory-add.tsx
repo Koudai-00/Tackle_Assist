@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Platform, Alert, ActivityIndicator, Image, Modal } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Colors } from '../constants/theme';
 import { useIdentity } from '../hooks/useIdentity';
 import { Save, Camera, Image as ImageIcon, ScanBarcode, X, AlertCircle } from 'lucide-react-native';
@@ -27,13 +27,20 @@ const CATEGORIES = [
 export default function InventoryAddModal() {
   const router = useRouter();
   const { uuid } = useIdentity();
-  
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('lure');
-  const [quantity, setQuantity] = useState('1');
-  const [locationTag, setLocationTag] = useState('');
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [barcode, setBarcode] = useState('');
+  const params = useLocalSearchParams<{
+    editId?: string; editName?: string; editCategory?: string;
+    editQuantity?: string; editLocationTag?: string;
+    editImageUrl?: string; editBarcode?: string;
+  }>();
+
+  const isEditMode = !!params.editId;
+
+  const [name, setName] = useState(params.editName || '');
+  const [category, setCategory] = useState(params.editCategory || 'lure');
+  const [quantity, setQuantity] = useState(params.editQuantity || '1');
+  const [locationTag, setLocationTag] = useState(params.editLocationTag || '');
+  const [imageUrl, setImageUrl] = useState<string | null>(params.editImageUrl || null);
+  const [barcode, setBarcode] = useState(params.editBarcode || '');
   
   const [locationTagsList, setLocationTagsList] = useState<any[]>([]);
 
@@ -124,25 +131,36 @@ export default function InventoryAddModal() {
     setIsSubmitting(true);
     try {
       const baseUrl = require('../utils/api').getBaseUrl();
-      const res = await fetch(`${baseUrl}/api/inventory`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: uuid,
-          name,
-          category,
-          quantity: parseInt(quantity) || 1,
-          locationTag,
-          imageUrl,
-          barcode
-        })
-      });
+      const payload = {
+        userId: uuid,
+        name,
+        category,
+        quantity: parseInt(quantity) || 1,
+        locationTag,
+        imageUrl,
+        barcode
+      };
+
+      let res;
+      if (isEditMode) {
+        res = await fetch(`${baseUrl}/api/inventory`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, id: params.editId })
+        });
+      } else {
+        res = await fetch(`${baseUrl}/api/inventory`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
       
       if (res.ok) {
         router.back();
       } else {
         if (Platform.OS === 'web') alert('エラーが発生しました');
-        else Alert.alert('登録失敗', 'エラーが発生しました');
+        else Alert.alert(isEditMode ? '更新失敗' : '登録失敗', 'エラーが発生しました');
       }
     } catch (error) {
       console.error(error);
@@ -153,6 +171,7 @@ export default function InventoryAddModal() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <Stack.Screen options={{ title: isEditMode ? 'タックルの編集' : '新規タックル登録' }} />
       {/* 写真エリア */}
       <View style={styles.imageSection}>
         {imageUrl ? (
@@ -233,7 +252,7 @@ export default function InventoryAddModal() {
         {isSubmitting ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <><Save color="#fff" size={20} /><Text style={styles.saveButtonText}>登録する</Text></>
+          <><Save color="#fff" size={20} /><Text style={styles.saveButtonText}>{isEditMode ? '更新する' : '登録する'}</Text></>
         )}
       </TouchableOpacity>
 

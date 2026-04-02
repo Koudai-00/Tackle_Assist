@@ -41,17 +41,42 @@ export const favoriteSetItems = pgTable('favorite_set_items', {
   requiredQuantity: integer('required_quantity').default(1).notNull(),
 });
 
-// 5. Shopping List (買い物リスト)
+// 5. Trip Checklists (釣行チェックリスト - 特定の日付に紐づく実行用)
+export const tripChecklists = pgTable('trip_checklists', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  setId: uuid('set_id').references(() => favoriteSets.id), // 元になったセット (任意)
+  name: varchar('name', { length: 255 }).notNull(), // (例: 4/10 駿河湾アジング)
+  tripDate: date('trip_date').notNull(),
+  isCompleted: boolean('is_completed').default(false).notNull(),
+  alertEnabled: boolean('alert_enabled').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// 6. Trip Checklist Items (個別の持ち物チェック状態)
+export const tripChecklistItems = pgTable('trip_checklist_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tripChecklistId: uuid('trip_checklist_id').references(() => tripChecklists.id).notNull(),
+  itemId: uuid('item_id').references(() => inventoryItems.id).notNull(),
+  name: varchar('name', { length: 255 }).notNull(), // アイテム名 (スナップショット)
+  requiredQuantity: integer('required_quantity').default(1).notNull(),
+  isPacked: boolean('is_packed').default(false).notNull(),
+});
+
+// 7. Shopping List (買い物リスト)
 export const shoppingList = pgTable('shopping_list', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').references(() => users.id).notNull(),
   itemName: varchar('item_name', { length: 255 }).notNull(), // 買うべき名前 または
   itemId: uuid('item_id').references(() => inventoryItems.id), // 既存アイテムの補充用リンク
+  quantity: integer('quantity').default(1).notNull(), // 買うべき個数
+  memo: text('memo'), // 買い物用のメモ
   isPurchased: boolean('is_purchased').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// 6. Maintenance Logs (メンテナンス・巻き替え履歴)
+// 8. Maintenance Logs (メンテナンス・巻き替え履歴)
 export const maintenanceLogs = pgTable('maintenance_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').references(() => users.id).notNull(),
@@ -64,6 +89,7 @@ export const maintenanceLogs = pgTable('maintenance_logs', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// 9. Location Tags
 export const locationTags = pgTable('location_tags', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').references(() => users.id).notNull(),

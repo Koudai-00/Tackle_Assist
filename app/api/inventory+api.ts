@@ -1,6 +1,6 @@
 import { db } from '../../lib/db';
 import { inventoryItems } from '../../db/schema';
-import { eq, asc, desc } from 'drizzle-orm';
+import { eq, and, asc, desc } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   try {
@@ -58,5 +58,53 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("Inventory POST error", err);
     return Response.json({ error: 'Failed to record inventory' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, userId, name, category, subCategory, quantity, locationTag, imageUrl, barcode } = body;
+
+    if (!id || !userId) {
+      return Response.json({ error: 'id and userId are required' }, { status: 400 });
+    }
+
+    const updateData: Record<string, any> = {};
+    if (name !== undefined) updateData.name = name;
+    if (category !== undefined) updateData.category = category;
+    if (subCategory !== undefined) updateData.subCategory = subCategory;
+    if (quantity !== undefined) updateData.quantity = quantity;
+    if (locationTag !== undefined) updateData.locationTag = locationTag || null;
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl || null;
+    if (barcode !== undefined) updateData.barcode = barcode || null;
+
+    await db.update(inventoryItems)
+      .set(updateData)
+      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.userId, userId)));
+
+    return Response.json({ success: true });
+  } catch (err) {
+    console.error("Inventory PATCH error", err);
+    return Response.json({ error: 'Failed to update inventory item' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, userId } = body;
+
+    if (!id || !userId) {
+      return Response.json({ error: 'id and userId are required' }, { status: 400 });
+    }
+
+    await db.delete(inventoryItems)
+      .where(and(eq(inventoryItems.id, id), eq(inventoryItems.userId, userId)));
+
+    return Response.json({ success: true });
+  } catch (err) {
+    console.error("Inventory DELETE error", err);
+    return Response.json({ error: 'Failed to delete inventory item' }, { status: 500 });
   }
 }
