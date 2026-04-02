@@ -1,6 +1,6 @@
 import { db } from '../../lib/db';
 import { maintenanceLogs, inventoryItems } from '../../db/schema';
-import { eq, asc, and } from 'drizzle-orm';
+import { eq, asc, and, isNotNull } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   try {
@@ -11,7 +11,6 @@ export async function GET(request: Request) {
       return Response.json({ error: 'userId parameter is required' }, { status: 400 });
     }
 
-    // leftJoinに変更し、itemIdがnull(任意設定)のものも取得できるようにする
     const logs = await db
       .select({
         id: maintenanceLogs.id,
@@ -26,13 +25,16 @@ export async function GET(request: Request) {
       })
       .from(maintenanceLogs)
       .leftJoin(inventoryItems, eq(maintenanceLogs.itemId, inventoryItems.id))
-      .where(eq(maintenanceLogs.userId, userId))
+      .where(and(
+        eq(maintenanceLogs.userId, userId),
+        isNotNull(maintenanceLogs.nextAlertDate)
+      ))
       .orderBy(asc(maintenanceLogs.nextAlertDate));
 
     return Response.json({ logs });
-  } catch (err) {
-    console.error("Maintenance GET Error", err);
-    return Response.json({ error: 'Failed to fetch maintenance logs' }, { status: 500 });
+  } catch (err: any) {
+    console.error("Maintenance GET Error", err?.message || err);
+    return Response.json({ logs: [], error: String(err?.message || 'Failed to fetch maintenance logs') }, { status: 200 });
   }
 }
 

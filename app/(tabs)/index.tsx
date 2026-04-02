@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator, 
 import { useFocusEffect, useRouter, Tabs, Link } from 'expo-router';
 import { Colors } from '../../constants/theme';
 import { useIdentity } from '../../hooks/useIdentity';
-import { ShieldAlert, Plus, ShieldCheck, Calendar as CalendarIcon, List as ListIcon, Backpack, CheckCircle2, ChevronRight, Info, Settings, User } from 'lucide-react-native';
+import { ShieldAlert, Plus, ShieldCheck, Calendar as CalendarIcon, List as ListIcon, Backpack, CircleCheck as CheckCircle2, ChevronRight, Info, Settings, User } from 'lucide-react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 
 LocaleConfig.locales['ja'] = {
@@ -29,15 +29,28 @@ export default function DashboardScreen() {
     setLoading(true);
     try {
       const baseUrl = require('@/utils/api').getBaseUrl();
-      
+
       const [mRes, tRes] = await Promise.all([
         fetch(`${baseUrl}/api/maintenance?userId=${uuid}`),
         fetch(`${baseUrl}/api/trips?userId=${uuid}`)
       ]);
-      
-      const [mData, tData] = await Promise.all([mRes.json(), tRes.json()]);
-      if (mData.logs) setMaintLogs(mData.logs);
-      if (tData.trips) setTrips(tData.trips);
+
+      const mText = await mRes.text();
+      const tText = await tRes.text();
+
+      try {
+        const mData = JSON.parse(mText);
+        if (mData.logs) setMaintLogs(mData.logs);
+      } catch {
+        console.warn("Maintenance response is not JSON:", mText.substring(0, 200));
+      }
+
+      try {
+        const tData = JSON.parse(tText);
+        if (tData.trips) setTrips(tData.trips);
+      } catch {
+        console.warn("Trips response is not JSON:", tText.substring(0, 200));
+      }
     } catch (err) {
       console.warn("Dashboard Fetch Error", err);
     } finally {
@@ -48,6 +61,7 @@ export default function DashboardScreen() {
   useFocusEffect(useCallback(() => { fetchData(); }, [uuid]));
 
   const renderMaintItem = (item: any) => {
+    if (!item.nextAlertDate) return null;
     const nextAlert = new Date(item.nextAlertDate);
     const today = new Date();
     const diffDays = Math.ceil((nextAlert.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
