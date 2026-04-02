@@ -14,11 +14,9 @@ export function useIdentity() {
         setUuid(myUuid);
         
         // 2. Neonバックエンド(API Route)へUUIDの存在通知・登録
-        // ExpoモバイルアプリからローカルのAPI Routesを叩く場合、DEV環境ではフルURLが必要な場合があるため
         // ここでは簡単に同一ホスト判定（Web想定またはProduction）としてフェッチを行います。
-        const apiUrl = Platform.OS === 'web' 
-            ? '/api/auth' 
-            : `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8081'}/api/auth`;
+        const baseUrl = require('@/utils/api').getBaseUrl();
+        const apiUrl = baseUrl ? `${baseUrl}/api/auth` : '/api/auth';
         
         try {
           await fetch(apiUrl, {

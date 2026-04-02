@@ -18,6 +18,8 @@ export const inventoryItems = pgTable('inventory_items', {
   specs: jsonb('specs'), // 重量、長さなどの詳細スペック
   quantity: integer('quantity').default(1).notNull(),
   locationTag: varchar('location_tag', { length: 255 }), // 保管場所 (例: ガレージA)
+  imageUrl: text('image_url'), // ユーザーが設定した写真のBase64エンコードデータ
+  barcode: varchar('barcode', { length: 255 }), // JANコード等のバーコード情報
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -53,9 +55,18 @@ export const shoppingList = pgTable('shopping_list', {
 export const maintenanceLogs = pgTable('maintenance_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').references(() => users.id).notNull(),
-  itemId: uuid('item_id').references(() => inventoryItems.id).notNull(),
-  maintenanceType: varchar('maintenance_type', { length: 100 }).notNull(), // line_change, oiling etc.
+  itemId: uuid('item_id').references(() => inventoryItems.id), // (任意) 対象となる釣具
+  customTitle: varchar('custom_title', { length: 255 }), // 任意のタイトル(ルアーフック交換など)
+  maintenanceType: varchar('maintenance_type', { length: 100 }).notNull(), // line_change, oiling, custom etc.
   lineType: varchar('line_type', { length: 100 }), // PE, Fluoro etc.
+  recurringInterval: varchar('recurring_interval', { length: 50 }), // 繰り返し設定(none, 1m, 6m, 1y等)
   nextAlertDate: date('next_alert_date'), // アラート日
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const locationTags = pgTable('location_tags', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
