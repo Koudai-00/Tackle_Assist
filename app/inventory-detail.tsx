@@ -113,12 +113,11 @@ export default function InventoryDetailModal() {
   const hasRelated = relatedData && (
     relatedData.sets.length > 0 ||
     relatedData.checklists.length > 0 ||
-    relatedData.shopping.length > 0 ||
     relatedData.maintenance.length > 0
   );
 
   const totalRelatedCount = relatedData
-    ? relatedData.sets.length + relatedData.checklists.length + relatedData.shopping.length + relatedData.maintenance.length
+    ? relatedData.sets.length + relatedData.checklists.length + relatedData.maintenance.length
     : 0;
 
   return (
@@ -225,15 +224,6 @@ export default function InventoryDetailModal() {
                     </View>
                   )}
 
-                  {relatedData!.shopping.length > 0 && (
-                    <View style={styles.relatedSection}>
-                      <Text style={styles.relatedLabel}>買い物リスト（{relatedData!.shopping.length}件）</Text>
-                      {relatedData!.shopping.map((s) => (
-                        <Text key={s.id} style={styles.relatedItem}>・ {s.itemName}（{s.quantity}個）</Text>
-                      ))}
-                    </View>
-                  )}
-
                   {relatedData!.maintenance.length > 0 && (
                     <View style={styles.relatedSection}>
                       <Text style={styles.relatedLabel}>メンテナンス履歴（{relatedData!.maintenance.length}件）</Text>
@@ -245,8 +235,6 @@ export default function InventoryDetailModal() {
                     </View>
                   )}
                 </View>
-              ) : relatedData ? (
-                <Text style={styles.noRelatedText}>紐づいているデータはありません。</Text>
               ) : null}
 
               <Text style={styles.irreversibleText}>この操作は元に戻せません。</Text>
@@ -372,11 +360,6 @@ const styles = StyleSheet.create({
     color: Colors.dark.text,
     lineHeight: 20,
     paddingLeft: 4,
-  },
-  noRelatedText: {
-    fontSize: 14,
-    color: Colors.dark.icon,
-    marginBottom: 12,
   },
   irreversibleText: {
     fontSize: 13,

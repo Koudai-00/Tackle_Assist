@@ -101,7 +101,7 @@ export async function DELETE(request: Request) {
 
     await db.delete(favoriteSetItems).where(eq(favoriteSetItems.itemId, id));
     await db.delete(tripChecklistItems).where(eq(tripChecklistItems.itemId, id));
-    await db.delete(shoppingList).where(eq(shoppingList.itemId, id));
+    await db.update(shoppingList).set({ itemId: null }).where(eq(shoppingList.itemId, id));
     await db.delete(maintenanceLogs).where(eq(maintenanceLogs.itemId, id));
 
     await db.delete(inventoryItems)
