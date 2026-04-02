@@ -1,5 +1,5 @@
 import { db } from '../../lib/db';
-import { inventoryItems } from '../../db/schema';
+import { inventoryItems, favoriteSetItems, tripChecklistItems, shoppingList, maintenanceLogs } from '../../db/schema';
 import { eq, and, asc, desc } from 'drizzle-orm';
 
 export async function GET(request: Request) {
@@ -98,6 +98,11 @@ export async function DELETE(request: Request) {
     if (!id || !userId) {
       return Response.json({ error: 'id and userId are required' }, { status: 400 });
     }
+
+    await db.delete(favoriteSetItems).where(eq(favoriteSetItems.itemId, id));
+    await db.delete(tripChecklistItems).where(eq(tripChecklistItems.itemId, id));
+    await db.delete(shoppingList).where(eq(shoppingList.itemId, id));
+    await db.delete(maintenanceLogs).where(eq(maintenanceLogs.itemId, id));
 
     await db.delete(inventoryItems)
       .where(and(eq(inventoryItems.id, id), eq(inventoryItems.userId, userId)));
