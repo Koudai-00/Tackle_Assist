@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform, ScrollView } from 'react-native';
-import { useFocusEffect, useRouter, Tabs } from 'expo-router';
+import { useFocusEffect, useRouter, Tabs, Link } from 'expo-router';
 import { Colors } from '../../constants/theme';
 import { useIdentity } from '../../hooks/useIdentity';
-import { ShieldAlert, Plus, ShieldCheck, Calendar as CalendarIcon, List as ListIcon, Backpack, CheckCircle2, ChevronRight, Info } from 'lucide-react-native';
+import { ShieldAlert, Plus, ShieldCheck, Calendar as CalendarIcon, List as ListIcon, Backpack, CheckCircle2, ChevronRight, Info, Settings, User } from 'lucide-react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 
 LocaleConfig.locales['ja'] = {
@@ -117,10 +117,19 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <Tabs.Screen options={{
+        headerLeft: () => (
+          <Link href="/transfer" asChild>
+            <TouchableOpacity style={{ marginLeft: 16 }}>
+              <User color={Colors.dark.text} size={28} />
+            </TouchableOpacity>
+          </Link>
+        ),
         headerRight: () => (
-          <TouchableOpacity onPress={() => setViewMode(v => v === 'list' ? 'calendar' : 'list')} style={{ paddingRight: 16 }}>
-            {viewMode === 'list' ? <CalendarIcon color={Colors.dark.primary} size={24} /> : <ListIcon color={Colors.dark.primary} size={24} />}
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity onPress={() => setViewMode(v => v === 'list' ? 'calendar' : 'list')} style={{ paddingRight: 16 }}>
+              {viewMode === 'list' ? <CalendarIcon color={Colors.dark.primary} size={24} /> : <ListIcon color={Colors.dark.primary} size={24} />}
+            </TouchableOpacity>
+          </View>
         ),
         title: viewMode === 'list' ? "ダッシュボード" : "スケジュール"
       }} />
