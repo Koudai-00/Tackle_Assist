@@ -21,12 +21,30 @@ const RECURRING_OPTIONS = [
   { id: '1y', label: '1年ごと' },
 ];
 
+const INVENTORY_CATEGORIES = [
+  { id: 'all', label: 'すべて' },
+  { id: 'rod', label: 'ロッド' },
+  { id: 'reel', label: 'リール' },
+  { id: 'lure', label: 'ルアー' },
+  { id: 'worm', label: 'ワーム' },
+  { id: 'hook', label: 'フック' },
+  { id: 'sinker', label: 'シンカー' },
+  { id: 'line', label: 'ライン' },
+  { id: 'rig', label: '仕掛け' },
+  { id: 'bait', label: 'エサ' },
+  { id: 'wear', label: 'ウェア' },
+  { id: 'bag', label: 'バッグ/収納' },
+  { id: 'tool', label: 'ツール' },
+  { id: 'other', label: 'その他' },
+];
+
 export default function MaintenanceAddModal() {
   const router = useRouter();
   const { uuid } = useIdentity();
   
   const [items, setItems] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [maintType, setMaintType] = useState('line_change');
@@ -52,7 +70,13 @@ export default function MaintenanceAddModal() {
     fetchInventory();
   }, [uuid]);
 
-  const filteredItems = items.filter(it => it.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredItems = items.filter(it => {
+    const matchesSearch = it.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || it.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const displayLimit = (searchQuery || selectedCategory !== 'all') ? 30 : 10;
 
   const handleSave = async () => {
     if (maintType === 'custom' && !customTitle.trim()) {
@@ -113,6 +137,18 @@ export default function MaintenanceAddModal() {
           onChangeText={setSearchQuery}
         />
       </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
+        {INVENTORY_CATEGORIES.map(cat => (
+          <TouchableOpacity 
+            key={cat.id} 
+            style={[styles.filterChip, selectedCategory === cat.id && styles.filterChipActive]}
+            onPress={() => setSelectedCategory(cat.id)}
+          >
+            <Text style={[styles.filterChipText, selectedCategory === cat.id && styles.filterChipTextActive]}>{cat.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
       <View style={styles.chipContainer}>
         <TouchableOpacity 
           style={[styles.chip, selectedItemId === null && styles.chipActive]}
@@ -120,7 +156,7 @@ export default function MaintenanceAddModal() {
         >
           <Text style={[styles.chipText, selectedItemId === null && styles.chipTextActive]}>対象指定なし</Text>
         </TouchableOpacity>
-        {filteredItems.slice(0, 10).map((it) => (
+        {filteredItems.slice(0, displayLimit).map((it) => (
           <TouchableOpacity 
             key={it.id} 
             style={[styles.chip, selectedItemId === it.id && styles.chipActive]}
@@ -230,6 +266,12 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: Colors.dark.primary, borderColor: Colors.dark.primary },
   chipText: { color: Colors.dark.icon, fontWeight: '600' },
   chipTextActive: { color: '#fff' },
+  filterScroll: { marginBottom: 12, marginHorizontal: -20 },
+  filterContent: { paddingHorizontal: 20, gap: 8 },
+  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: Colors.dark.border },
+  filterChipActive: { backgroundColor: 'rgba(14, 165, 233, 0.15)', borderColor: Colors.dark.primary },
+  filterChipText: { color: Colors.dark.icon, fontSize: 13, fontWeight: '600' },
+  filterChipTextActive: { color: Colors.dark.primary },
   datePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.surface, padding: 16, borderRadius: 12, gap: 12, borderWidth: 1, borderColor: Colors.dark.border },
   datePickerText: { color: Colors.dark.text, fontSize: 16, fontWeight: '600' },
   saveButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.dark.primary, paddingVertical: 16, borderRadius: 16, marginTop: 40, gap: 8 },

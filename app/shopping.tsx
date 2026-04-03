@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator, 
 import { useFocusEffect } from 'expo-router';
 import { Colors } from '../constants/theme';
 import { useIdentity } from '../hooks/useIdentity';
-import { CheckSquare, Square, ShoppingCart, Plus, Trash2, ChevronDown, ChevronUp, Edit3, Minus, Info } from 'lucide-react-native';
+import { CheckSquare, Square, ShoppingCart, Plus, Trash2, ChevronDown, ChevronUp, Edit3, Minus, Info, X } from 'lucide-react-native';
 
 export default function ShoppingListScreen() {
   const { uuid } = useIdentity();
@@ -379,6 +379,12 @@ export default function ShoppingListScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.replenishHeader}>
+              <TouchableOpacity
+                onPress={() => setReplenishModalVisible(false)}
+                style={styles.modalCloseBtn}
+              >
+                <X color={Colors.dark.icon} size={24} />
+              </TouchableOpacity>
               <Info color={Colors.dark.primary} size={32} />
               <Text style={styles.replenishTitle}>在庫に補充しますか？</Text>
             </View>
@@ -487,8 +493,9 @@ const styles = StyleSheet.create({
   modalConfirmText: { color: '#fff', fontWeight: 'bold' },
 
   // 補充確認用
-  replenishHeader: { alignItems: 'center', gap: 12, marginBottom: 16 },
+  replenishHeader: { alignItems: 'center', gap: 12, marginBottom: 16, position: 'relative' },
   replenishTitle: { fontSize: 20, fontWeight: 'bold', color: Colors.dark.text },
   replenishText: { fontSize: 14, color: Colors.dark.text, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
-  replenishCounter: { marginBottom: 24 }
+  replenishCounter: { marginBottom: 24 },
+  modalCloseBtn: { position: 'absolute', right: -10, top: -10, padding: 8 }
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Platform, Alert, ActivityIndicator, Image, Modal } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Colors } from '../constants/theme';
@@ -6,6 +6,7 @@ import { useIdentity } from '../hooks/useIdentity';
 import { Save, Camera, Image as ImageIcon, ScanBarcode, X, AlertCircle } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import DropdownBtn from './components/DropdownBtn';
 
 const CATEGORIES = [
@@ -50,6 +51,7 @@ export default function InventoryAddModal() {
   const [isScanning, setIsScanning] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [isApiLoading, setIsApiLoading] = useState(false);
+  const isScanProcessing = useRef(false);
 
   useEffect(() => {
     async function fetchLocTags() {
@@ -89,6 +91,12 @@ export default function InventoryAddModal() {
   };
 
   const handleBarcodeScanned = async ({ type, data }: { type: string, data: string }) => {
+    if (isScanProcessing.current) return;
+    isScanProcessing.current = true;
+
+    // バイブレーション
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
     setIsScanning(false);
     setBarcode(data);
     setIsApiLoading(true);
@@ -107,6 +115,10 @@ export default function InventoryAddModal() {
       console.warn('Barcode API failed', e);
     } finally {
       setIsApiLoading(false);
+      // しばらくしてから次回のスキャンを許可する（念のため）
+      setTimeout(() => {
+        isScanProcessing.current = false;
+      }, 1500);
     }
   };
 

@@ -113,11 +113,12 @@ export default function InventoryDetailModal() {
   const hasRelated = relatedData && (
     relatedData.sets.length > 0 ||
     relatedData.checklists.length > 0 ||
+    relatedData.shopping.length > 0 ||
     relatedData.maintenance.length > 0
   );
 
   const totalRelatedCount = relatedData
-    ? relatedData.sets.length + relatedData.checklists.length + relatedData.maintenance.length
+    ? relatedData.sets.length + relatedData.checklists.length + relatedData.shopping.length + relatedData.maintenance.length
     : 0;
 
   return (
@@ -231,6 +232,15 @@ export default function InventoryDetailModal() {
                         <Text key={m.id} style={styles.relatedItem}>
                           ・ {m.customTitle || MAINTENANCE_TYPES[m.maintenanceType] || m.maintenanceType}
                         </Text>
+                      ))}
+                    </View>
+                  )}
+
+                  {relatedData!.shopping.length > 0 && (
+                    <View style={styles.relatedSection}>
+                      <Text style={styles.relatedLabel}>買い物リスト（{relatedData!.shopping.length}件）</Text>
+                      {relatedData!.shopping.map((s) => (
+                        <Text key={s.id} style={styles.relatedItem}>・ 「{s.itemName}」の購入予定（{s.quantity}個）</Text>
                       ))}
                     </View>
                   )}

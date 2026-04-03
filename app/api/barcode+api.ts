@@ -12,8 +12,8 @@ export async function GET(request: Request) {
       return Response.json({ error: 'Yahoo APIキー(Client ID)が設定されていません' }, { status: 500 });
     }
 
-    // Yahooショッピング商品検索API V3
-    const yahooApiUrl = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${clientId}&jan=${janCode}&results=1`;
+    // Yahooショッピング商品検索API V3 (jan_codeパラメータを使用)
+    const yahooApiUrl = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${clientId}&jan_code=${janCode}&results=1`;
     
     const res = await fetch(yahooApiUrl);
     const data = await res.json();
