@@ -29,6 +29,8 @@ export async function GET(request: Request) {
         name: tripChecklists.name,
         tripDate: tripChecklists.tripDate,
         isCompleted: tripChecklists.isCompleted,
+        alertEnabled: tripChecklists.alertEnabled,
+        alertAt: tripChecklists.alertAt,
         totalItems: sql<number>`count(${tripChecklistItems.id})`,
         packedItems: sql<number>`count(case when ${tripChecklistItems.isPacked} then 1 end)`
       })
@@ -49,14 +51,19 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, setId, name, tripDate, alertEnabled } = body;
-
+    const { userId, setId, name, tripDate, alertEnabled, alertAt } = body;
+    let alertAtFinal = null;
+    if (alertAt) {
+      alertAtFinal = new Date(alertAt);
+    }
+ 
     const [newTrip] = await db.insert(tripChecklists).values({
       userId,
       setId,
       name,
       tripDate: tripDate || new Date().toISOString().split('T')[0],
-      alertEnabled: !!alertEnabled
+      alertEnabled: !!alertEnabled,
+      alertAt: alertAtFinal
     }).returning();
 
     // セットに含まれるアイテムをコピー
@@ -93,20 +100,27 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { tripId, itemId, isPacked, isCompleted } = body;
-
+    const { tripId, itemId, isPacked, isCompleted, name, tripDate, alertAt, alertEnabled } = body;
+ 
     if (itemId) {
       await db.update(tripChecklistItems)
         .set({ isPacked })
         .where(eq(tripChecklistItems.id, itemId));
     }
-
-    if (isCompleted !== undefined) {
+ 
+    if (tripId && (isCompleted !== undefined || name || tripDate || alertAt !== undefined || alertEnabled !== undefined)) {
+      const updateData: any = { updatedAt: new Date() };
+      if (isCompleted !== undefined) updateData.isCompleted = isCompleted;
+      if (name) updateData.name = name;
+      if (tripDate) updateData.tripDate = tripDate;
+      if (alertAt !== undefined) updateData.alertAt = alertAt ? new Date(alertAt) : null;
+      if (alertEnabled !== undefined) updateData.alertEnabled = !!alertEnabled;
+ 
       await db.update(tripChecklists)
-        .set({ isCompleted, updatedAt: new Date() })
+        .set(updateData)
         .where(eq(tripChecklists.id, tripId));
     }
-
+ 
     return Response.json({ success: true });
   } catch (err) {
     console.error("Trips PATCH Error", err);

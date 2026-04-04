@@ -5,10 +5,12 @@ import { Colors } from '../constants/theme';
 import { useIdentity } from '../hooks/useIdentity';
 import { SmartphoneNfc, Copy, Upload } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
+import { useRouter, Stack } from 'expo-router';
 
 const IDENTITY_KEY = 'tackle_assist_user_uuid';
 
 export default function TransferScreen() {
+  const router = useRouter();
   const { uuid } = useIdentity();
   const [newCode, setNewCode] = useState('');
 
@@ -62,6 +64,7 @@ export default function TransferScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Stack.Screen options={{ title: 'データ引き継ぎ・設定', headerBackTitle: '' }} />
       <View style={styles.headerArea}>
         <SmartphoneNfc color={Colors.dark.primary} size={48} />
         <Text style={styles.headerTitle}>データ引き継ぎ</Text>

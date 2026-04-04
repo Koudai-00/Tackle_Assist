@@ -1,14 +1,47 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Alert, Modal, ScrollView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Colors } from '../constants/theme';
 import { useIdentity } from '../hooks/useIdentity';
 import { Plus, Minus, Trash2, Search, Check, ChevronRight } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DropdownBtn from './components/DropdownBtn';
+
+const CATEGORIES = [
+  { id: 'all', label: 'すべて' },
+  { id: 'rod', label: 'ロッド' },
+  { id: 'reel', label: 'リール' },
+  { id: 'lure', label: 'ルアー' },
+  { id: 'worm', label: 'ワーム' },
+  { id: 'hook', label: 'フック' },
+  { id: 'sinker', label: 'シンカー' },
+  { id: 'line', label: 'ライン' },
+  { id: 'rig', label: '仕掛け' },
+  { id: 'bait', label: 'エサ' },
+  { id: 'wear', label: 'ウェア' },
+  { id: 'bag', label: 'バッグ/収納' },
+  { id: 'tool', label: 'ツール' },
+  { id: 'other', label: 'その他' },
+];
+
+const SORT_OPTIONS = [
+  { id: 'date', label: '新着順' },
+  { id: 'name', label: '名前順' },
+  { id: 'qty', label: '在庫少ない順' },
+];
+
+const CATEGORY_MAP: Record<string, string> = {
+  rod: 'ロッド', reel: 'リール', lure: 'ルアー', worm: 'ワーム',
+  hook: 'フック', sinker: 'シンカー', line: 'ライン', rig: '仕掛け',
+  bait: 'エサ', wear: 'ウェア', bag: 'バッグ/収納', tool: 'ツール',
+  other: 'その他',
+};
 
 export default function SetEditorScreen() {
   const router = useRouter();
   const { uuid } = useIdentity();
   const { id } = useLocalSearchParams<{ id?: string }>();
+  const insets = useSafeAreaInsets();
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -21,6 +54,8 @@ export default function SetEditorScreen() {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [inventory, setInventory] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('date');
 
   const fetchSetDetail = async () => {
     if (!id || !uuid) return;
@@ -123,9 +158,20 @@ export default function SetEditorScreen() {
     }
   };
 
-  const filteredInventory = inventory.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredInventory = useMemo(() => {
+    const list = inventory.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+
+    if (sortBy === 'name') {
+      list.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    } else if (sortBy === 'qty') {
+      list.sort((a, b) => a.quantity - b.quantity);
+    }
+    return list;
+  }, [inventory, searchQuery, activeCategory, sortBy]);
 
   if (isLoading) {
     return <View style={styles.center}><ActivityIndicator color={Colors.dark.primary} /></View>;
@@ -133,7 +179,10 @@ export default function SetEditorScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: id ? 'セットを編集' : 'セットを新規作成' }} />
+      <Stack.Screen options={{ 
+        title: id ? 'セットを編集' : 'セットを新規作成',
+        headerBackTitle: ''
+      }} />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.label}>セット名</Text>
@@ -195,22 +244,34 @@ export default function SetEditorScreen() {
       {/* アイテム選択モーダル */}
       <Modal visible={pickerVisible} animationType="slide">
         <View style={styles.modalBg}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>追加したいアイテムを選択</Text>
+          <View style={[styles.modalHeader, { paddingTop: Math.max(insets.top + 12, 44) }]}>
+            <Text style={styles.modalTitle}>アイテムを追加</Text>
             <TouchableOpacity onPress={() => setPickerVisible(false)}>
-              <Text style={{ color: Colors.dark.primary, fontSize: 16 }}>完了</Text>
+              <Text style={{ color: Colors.dark.primary, fontSize: 16, fontWeight: 'bold' }}>完了</Text>
             </TouchableOpacity>
           </View>
           
-          <View style={styles.searchBar}>
-            <Search color={Colors.dark.icon} size={20} />
-            <TextInput 
-              style={styles.searchInput} 
-              placeholder="在庫内を検索" 
-              placeholderTextColor={Colors.dark.icon}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
+          <View style={styles.filterSection}>
+            <View style={styles.searchBar}>
+              <Search color={Colors.dark.icon} size={18} />
+              <TextInput 
+                style={styles.searchInput} 
+                placeholder="在庫内を検索" 
+                placeholderTextColor={Colors.dark.icon}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+
+            <View style={styles.dropdownRow}>
+              <View style={{ flex: 1.2 }}>
+                <DropdownBtn options={CATEGORIES} selectedValue={activeCategory} onSelect={setActiveCategory} label="カテゴリ" />
+              </View>
+              <View style={{ width: 8 }} />
+              <View style={{ flex: 1 }}>
+                <DropdownBtn options={SORT_OPTIONS} selectedValue={sortBy} onSelect={setSortBy} label="並び替え" />
+              </View>
+            </View>
           </View>
 
           <FlatList
@@ -225,7 +286,9 @@ export default function SetEditorScreen() {
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.pickerItemName}>{item.name}</Text>
-                    <Text style={styles.pickerItemSub}>{item.category} ・ 残り {item.quantity}</Text>
+                    <Text style={styles.pickerItemSub}>
+                      {CATEGORY_MAP[item.category] || item.category} ・ 残り {item.quantity}
+                    </Text>
                   </View>
                   {isSelected && <Check color={Colors.dark.primary} size={24} />}
                 </TouchableOpacity>
@@ -262,12 +325,14 @@ const styles = StyleSheet.create({
   saveBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 
   modalBg: { flex: 1, backgroundColor: Colors.dark.background },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderColor: Colors.dark.border },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderColor: Colors.dark.border },
   modalTitle: { color: Colors.dark.text, fontSize: 18, fontWeight: 'bold' },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.surface, margin: 16, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, gap: 12, borderWidth: 1, borderColor: Colors.dark.border },
-  searchInput: { flex: 1, color: Colors.dark.text, fontSize: 16 },
-  pickerItem: { flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderColor: Colors.dark.border },
+  filterSection: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, borderBottomWidth: 1, borderColor: Colors.dark.border },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.surface, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, gap: 10, borderWidth: 1, borderColor: Colors.dark.border, marginBottom: 12 },
+  searchInput: { flex: 1, color: Colors.dark.text, fontSize: 15 },
+  dropdownRow: { flexDirection: 'row', marginBottom: 8 },
+  pickerItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderColor: Colors.dark.border },
   pickerItemActive: { backgroundColor: 'rgba(14, 165, 233, 0.05)' },
   pickerItemName: { color: Colors.dark.text, fontSize: 16, fontWeight: '500' },
-  pickerItemSub: { color: Colors.dark.icon, fontSize: 12, marginTop: 4 }
+  pickerItemSub: { color: Colors.dark.icon, fontSize: 13, marginTop: 4 }
 });

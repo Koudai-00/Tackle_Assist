@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform, ScrollView, Alert, Modal, TextInput } from 'react-native';
 import { useFocusEffect, useRouter, Tabs, Link } from 'expo-router';
 import { Colors } from '../../constants/theme';
 import { useIdentity } from '../../hooks/useIdentity';
-import { ShieldAlert, Plus, ShieldCheck, Calendar as CalendarIcon, List as ListIcon, Backpack, CircleCheck as CheckCircle2, ChevronRight, Info, Settings, User } from 'lucide-react-native';
+import { ShieldAlert, Plus, ShieldCheck, Calendar as CalendarIcon, List as ListIcon, Backpack, CircleCheck as CheckCircle2, ChevronRight, Info, Settings, User, MoreVertical, Edit3, Trash2, Bell, Clock } from 'lucide-react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 LocaleConfig.locales['ja'] = {
   monthNames: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
@@ -23,6 +24,17 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [selectedDateStr, setSelectedDateStr] = useState<string>(new Date().toISOString().split('T')[0]);
+
+  // 編集モーダル用
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [targetTrip, setTargetTrip] = useState<any>(null);
+  const [editName, setEditName] = useState('');
+  const [editDate, setEditDate] = useState(new Date());
+  const [editAlertAt, setEditAlertAt] = useState(new Date());
+  const [editAlertEnabled, setEditAlertEnabled] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchData = async () => {
     if (!uuid) return;
@@ -101,9 +113,73 @@ export default function DashboardScreen() {
             <Text style={styles.progressText}>{item.packedItems} / {item.totalItems}</Text>
           </View>
         </View>
-        {progress === 1 ? <CheckCircle2 color={Colors.dark.secondary} size={24} /> : <ChevronRight color={Colors.dark.icon} size={20} />}
+        <TouchableOpacity style={{ padding: 8 }} onPress={(e) => { e.stopPropagation(); openEditModal(item); }}>
+          <MoreVertical color={Colors.dark.icon} size={20} />
+        </TouchableOpacity>
       </TouchableOpacity>
     );
+  };
+
+  const openEditModal = (trip: any) => {
+    setTargetTrip(trip);
+    setEditName(trip.name);
+    setEditDate(new Date(trip.tripDate));
+    setEditAlertAt(trip.alertAt ? new Date(trip.alertAt) : new Date(new Date().setHours(new Date().getHours() + 1, 0, 0, 0)));
+    setEditAlertEnabled(trip.alertEnabled);
+    setEditModalVisible(true);
+  };
+
+  const handleUpdateTrip = async () => {
+    if (!editName.trim() || !targetTrip) return;
+    setIsUpdating(true);
+    try {
+      const baseUrl = require('@/utils/api').getBaseUrl();
+      const res = await fetch(`${baseUrl}/api/trips`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tripId: targetTrip.id,
+          name: editName.trim(),
+          tripDate: editDate.toISOString().split('T')[0],
+          alertEnabled: editAlertEnabled,
+          alertAt: editAlertEnabled ? editAlertAt.toISOString() : null
+        })
+      });
+      if (res.ok) {
+        setEditModalVisible(false);
+        fetchData();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteTrip = async () => {
+    if (!targetTrip) return;
+    
+    const doDelete = async () => {
+      try {
+        const baseUrl = require('@/utils/api').getBaseUrl();
+        const res = await fetch(`${baseUrl}/api/trips?id=${targetTrip.id}`, { method: 'DELETE' });
+        if (res.ok) {
+          setEditModalVisible(false);
+          fetchData();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('チェックリストを削除しますか？')) doDelete();
+    } else {
+      Alert.alert('確認', 'チェックリストを削除しますか？', [
+        { text: 'キャンセル', style: 'cancel' },
+        { text: '削除', style: 'destructive', onPress: doDelete }
+      ]);
+    }
   };
 
   // カレンダーマーカー
@@ -203,6 +279,104 @@ export default function DashboardScreen() {
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/maintenance-add')}>
         <Plus color="#ffffff" size={32} />
       </TouchableOpacity>
+
+      {/* 編集モーダル */}
+      <Modal visible={editModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>準備リストの編集</Text>
+              <TouchableOpacity onPress={() => handleDeleteTrip()}>
+                <Trash2 color={Colors.dark.danger} size={20} />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.label}>釣行名 / タイトル</Text>
+            <TextInput 
+              style={styles.input} 
+              value={editName} 
+              onChangeText={setEditName}
+              placeholder="タイトル"
+              placeholderTextColor={Colors.dark.icon}
+            />
+
+            <Text style={styles.label}>予定日</Text>
+            <TouchableOpacity style={styles.dateSelector} onPress={() => setShowDatePicker(true)}>
+              <CalendarIcon color={Colors.dark.primary} size={18} />
+              <Text style={styles.dateSelectorText}>{editDate.toISOString().split('T')[0]}</Text>
+            </TouchableOpacity>
+
+            <View style={styles.alertToggleRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Bell color={editAlertEnabled ? Colors.dark.primary : Colors.dark.icon} size={16} />
+                <Text style={styles.label}>アラート設定</Text>
+              </View>
+              <TouchableOpacity onPress={() => setEditAlertEnabled(!editAlertEnabled)}>
+                <Text style={{ color: editAlertEnabled ? Colors.dark.primary : Colors.dark.icon, fontWeight: 'bold' }}>
+                  {editAlertEnabled ? 'ON' : 'OFF'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {editAlertEnabled && (
+              <View style={styles.alertSelectors}>
+                <TouchableOpacity style={[styles.dateSelector, { flex: 1.5, marginBottom: 0 }]} onPress={() => setShowDatePicker(true)}>
+                  <CalendarIcon color={Colors.dark.icon} size={16} />
+                  <Text style={styles.dateSelectorText}>{editAlertAt.toLocaleDateString('ja-JP')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.dateSelector, { flex: 1, marginBottom: 0 }]} onPress={() => setShowTimePicker(true)}>
+                  <Clock color={Colors.dark.icon} size={16} />
+                  <Text style={styles.dateSelectorText}>{editAlertAt.getHours()}:00</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={editAlertAt}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowDatePicker(false);
+                  if (date) {
+                    const newDate = new Date(editAlertAt);
+                    newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+                    setEditAlertAt(newDate);
+                    setEditDate(newDate);
+                  }
+                }}
+              />
+            )}
+
+            {showTimePicker && (
+              <DateTimePicker
+                value={editAlertAt}
+                mode="time"
+                display="spinner"
+                is24Hour={true}
+                minuteInterval={60}
+                onChange={(event, date) => {
+                  setShowTimePicker(false);
+                  if (date) {
+                    const newDate = new Date(editAlertAt);
+                    newDate.setHours(date.getHours(), 0, 0, 0);
+                    setEditAlertAt(newDate);
+                  }
+                }}
+              />
+            )}
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditModalVisible(false)} disabled={isUpdating}>
+                <Text style={styles.cancelBtnText}>キャンセル</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmBtn} onPress={handleUpdateTrip} disabled={isUpdating}>
+                {isUpdating ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmBtnText}>更新する</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -239,5 +413,22 @@ const styles = StyleSheet.create({
   selectedDateTitle: { color: Colors.dark.icon, fontWeight: 'bold', marginBottom: 16 },
   noPlanText: { color: Colors.dark.icon, textAlign: 'center', marginTop: 30 },
   
-  fab: { position: 'absolute', right: 20, bottom: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.dark.primary, justifyContent: 'center', alignItems: 'center', shadowColor: '#0ea5e9', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8 }
+  fab: { position: 'absolute', right: 20, bottom: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.dark.primary, justifyContent: 'center', alignItems: 'center', shadowColor: '#0ea5e9', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8 },
+
+  // モーダル
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: Colors.dark.surface, borderRadius: 24, padding: 24, borderWidth: 1, borderColor: Colors.dark.border },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: Colors.dark.text },
+  label: { fontSize: 12, color: Colors.dark.icon, marginBottom: 8 },
+  input: { backgroundColor: Colors.dark.background, color: Colors.dark.text, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.border, fontSize: 16, marginBottom: 20 },
+  dateSelector: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.background, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.border, gap: 10, marginBottom: 20 },
+  dateSelectorText: { color: Colors.dark.text, fontSize: 16 },
+  alertToggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  alertSelectors: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 10 },
+  cancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: Colors.dark.background, borderWidth: 1, borderColor: Colors.dark.border },
+  cancelBtnText: { color: Colors.dark.text, fontWeight: '600' },
+  confirmBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: Colors.dark.primary },
+  confirmBtnText: { color: '#fff', fontWeight: 'bold' }
 });

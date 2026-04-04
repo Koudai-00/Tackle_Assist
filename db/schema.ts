@@ -50,6 +50,7 @@ export const tripChecklists = pgTable('trip_checklists', {
   tripDate: date('trip_date').notNull(),
   isCompleted: boolean('is_completed').default(false).notNull(),
   alertEnabled: boolean('alert_enabled').default(false).notNull(),
+  alertAt: timestamp('alert_at'), // アラートを鳴らす日時
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
