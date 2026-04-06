@@ -94,8 +94,10 @@ export default function TripPackingScreen() {
       <Stack.Screen options={{ 
         title: trip.name,
         headerLeft: () => (
-          <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
-            <ArrowLeft color={Colors.dark.primary} size={28} />
+          <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: -4, padding: 12 }}>
+            <View pointerEvents="none">
+              <ArrowLeft color={Colors.dark.primary} size={28} />
+            </View>
           </TouchableOpacity>
         )
       }} />
@@ -127,11 +129,13 @@ export default function TripPackingScreen() {
             onPress={() => togglePacked(item.id, item.isPacked)}
           >
             <View style={styles.itemMain}>
-              {item.isPacked ? (
-                <CheckCircle2 color={Colors.dark.primary} size={28} />
-              ) : (
-                <Circle color={Colors.dark.icon} size={28} />
-              )}
+              <View pointerEvents="none">
+                {item.isPacked ? (
+                  <CheckCircle2 color={Colors.dark.primary} size={28} />
+                ) : (
+                  <Circle color={Colors.dark.icon} size={28} />
+                )}
+              </View>
               <View style={styles.itemTextContainer}>
                 <Text style={[styles.itemName, item.isPacked && styles.itemNamePacked]}>{item.name}</Text>
                 <Text style={styles.itemQty}>必要数: {item.requiredQuantity}</Text>
@@ -142,8 +146,10 @@ export default function TripPackingScreen() {
         ListFooterComponent={
           packedCount === totalCount && !trip.isCompleted ? (
             <TouchableOpacity style={styles.completeBtn} onPress={handleCompleteTrip} disabled={isUpdating}>
-              <Trophy color="#fff" size={20} />
-              <Text style={styles.completeBtnText}>準備完了を記録する</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} pointerEvents="none">
+                <Trophy color="#fff" size={20} />
+                <Text style={styles.completeBtnText}>準備完了を記録する</Text>
+              </View>
             </TouchableOpacity>
           ) : null
         }

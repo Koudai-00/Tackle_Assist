@@ -5,6 +5,7 @@ import { Colors } from '../../constants/theme';
 import { useIdentity } from '../../hooks/useIdentity';
 import { Backpack, Sparkles, FolderOpen, Plus, Edit3, Trash2, Calendar, CheckCircle2, Info, Bell, Clock, ChevronLeft, ChevronRight, X, Search } from 'lucide-react-native';
 import DropdownBtn from '../components/DropdownBtn';
+import AdCard from '../components/AdCard';
 
 const SORT_OPTIONS = [
   { id: 'date', label: '新着順' },
@@ -202,17 +203,23 @@ export default function PackingScreen() {
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={() => router.push({ pathname: '/set-editor', params: { id: item.id } })} style={styles.iconBtn}>
-            <Edit3 color={Colors.dark.icon} size={20} />
+            <View pointerEvents="none">
+              <Edit3 color={Colors.dark.icon} size={20} />
+            </View>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleDeleteSet(item.id, item.name)} style={styles.iconBtn}>
-            <Trash2 color={Colors.dark.danger} size={20} />
+            <View pointerEvents="none">
+              <Trash2 color={Colors.dark.danger} size={20} />
+            </View>
           </TouchableOpacity>
         </View>
       </View>
       
       <TouchableOpacity style={styles.prepBtn} onPress={() => openPrepModal(item)}>
-        <CheckCircle2 color="#fff" size={18} />
-        <Text style={styles.prepBtnText}>このセットで準備を開始</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} pointerEvents="none">
+          <CheckCircle2 color="#fff" size={18} />
+          <Text style={styles.prepBtnText}>このセットで準備を開始</Text>
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -221,8 +228,10 @@ export default function PackingScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{
         headerRight: () => (
-          <TouchableOpacity onPress={() => router.push('/set-editor')} style={{ marginRight: 16 }}>
-            <Plus color={Colors.dark.primary} size={28} />
+          <TouchableOpacity onPress={() => router.push('/set-editor')} style={{ marginRight: 4, padding: 12 }}>
+            <View pointerEvents="none">
+              <Plus color={Colors.dark.primary} size={28} />
+            </View>
           </TouchableOpacity>
         )
       }} />
@@ -230,7 +239,12 @@ export default function PackingScreen() {
       <FlatList
         data={filteredSets}
         keyExtractor={(item) => item.id}
-        renderItem={renderSet}
+        renderItem={({ item, index }) => (
+          <>
+            {index > 0 && index % 5 === 0 && <AdCard />}
+            {renderSet({ item })}
+          </>
+        )}
         contentContainerStyle={styles.listContainer}
         ListHeaderComponent={
           <>
@@ -493,7 +507,7 @@ const styles = StyleSheet.create({
   setTitle: { fontSize: 18, fontWeight: '600', color: Colors.dark.text },
   setDesc: { fontSize: 14, color: Colors.dark.icon, marginTop: 4 },
   headerActions: { flexDirection: 'row', gap: 4 },
-  iconBtn: { padding: 8 },
+  iconBtn: { padding: 12, margin: -4 },
 
   prepBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.dark.secondary, paddingVertical: 12, borderRadius: 12, gap: 8 },
   prepBtnText: { color: '#fff', fontSize: 15, fontWeight: 'bold' },

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Colors } from '../constants/theme';
 import { useIdentity } from '../hooks/useIdentity';
 import { Sparkles, Save, Lightbulb } from 'lucide-react-native';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 export default function AIPackingModal() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function AIPackingModal() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<{ advice: string; recommendedItemIds: string[] } | null>(null);
+  const { showAd } = useInterstitialAd();
 
   const handleAskAI = async () => {
     if (!targetFish.trim()) {
@@ -58,7 +60,10 @@ export default function AIPackingModal() {
             userId: uuid,
             name: `${targetFish}攻略セット (${location || '場所指定なし'})`,
             description: result.advice,
-            itemIds: result.recommendedItemIds
+            items: result.recommendedItemIds.map((id: string) => ({
+              itemId: id,
+              requiredQuantity: 1
+            }))
          })
        });
        if (res.ok) {
@@ -114,7 +119,15 @@ export default function AIPackingModal() {
 
           <TouchableOpacity 
             style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]} 
-            onPress={handleAskAI}
+            onPress={() => {
+              if (!targetFish.trim()) {
+                if (Platform.OS === 'web') alert('対象魚（ターゲット）を入力してください');
+                else Alert.alert('エラー', '対象魚（ターゲット）を入力してください');
+                return;
+              }
+              // インタースティシャル広告を表示してからAIリクエストを実行
+              showAd(() => handleAskAI());
+            }}
             disabled={isSubmitting}
           >
             {isSubmitting ? <ActivityIndicator color="#fff" /> : <><Sparkles color="#fff" size={20} /><Text style={styles.submitBtnText}>提案を生成する</Text></>}

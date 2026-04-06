@@ -1,6 +1,6 @@
 import { db } from '../../lib/db';
 import { maintenanceLogs, inventoryItems } from '../../db/schema';
-import { eq, asc, and, isNotNull } from 'drizzle-orm';
+import { eq, asc, and, isNotNull, sql } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   try {
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
       return Response.json({ error: 'userId parameter is required' }, { status: 400 });
     }
 
-    const logs = await db
+    const allLogs = await db
       .select({
         id: maintenanceLogs.id,
         maintenanceType: maintenanceLogs.maintenanceType,
@@ -19,6 +19,8 @@ export async function GET(request: Request) {
         lineType: maintenanceLogs.lineType,
         recurringInterval: maintenanceLogs.recurringInterval,
         nextAlertDate: maintenanceLogs.nextAlertDate,
+        isCompleted: maintenanceLogs.isCompleted,
+        completedAt: maintenanceLogs.completedAt,
         createdAt: maintenanceLogs.createdAt,
         itemId: maintenanceLogs.itemId,
         itemName: inventoryItems.name,
@@ -31,10 +33,13 @@ export async function GET(request: Request) {
       ))
       .orderBy(asc(maintenanceLogs.nextAlertDate));
 
-    return Response.json({ logs });
+    const activeLogs = allLogs.filter(log => !log.isCompleted);
+    const completedLogs = allLogs.filter(log => log.isCompleted);
+
+    return Response.json({ activeLogs, completedLogs, logs: allLogs });
   } catch (err: any) {
     console.error("Maintenance GET Error", err?.message || err);
-    return Response.json({ logs: [], error: String(err?.message || 'Failed to fetch maintenance logs') }, { status: 200 });
+    return Response.json({ activeLogs: [], completedLogs: [], logs: [], error: String(err?.message || 'Failed to fetch maintenance logs') }, { status: 200 });
   }
 }
 
@@ -47,14 +52,13 @@ export async function POST(request: Request) {
        return Response.json({ error: 'Missing fundamental fields' }, { status: 400 });
     }
 
-    // クライアントで指定されたアラート日がない場合は自動計算
     let formattedDate = alertDateStr;
     if (!formattedDate) {
       let addDays = 180;
       if (lineType === 'fluoro' || lineType === 'nylon') addDays = 90;
       const alertDate = new Date();
       alertDate.setDate(alertDate.getDate() + addDays);
-      formattedDate = alertDate.toISOString().split('T')[0]; // YYYY-MM-DD
+      formattedDate = alertDate.toISOString().split('T')[0];
     }
 
     await db.insert(maintenanceLogs).values({
@@ -65,6 +69,7 @@ export async function POST(request: Request) {
       lineType: lineType || null,
       recurringInterval: recurringInterval || 'none',
       nextAlertDate: formattedDate,
+      isCompleted: false,
     });
 
     return Response.json({ success: true, nextAlertDate: formattedDate });
@@ -77,7 +82,15 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const body = await request.json();
-    const { id, userId } = body;
+    const { id, userId, clearCompleted } = body;
+
+    if (clearCompleted) {
+      if (!userId) return Response.json({ error: 'userId required' }, { status: 400 });
+      await db.delete(maintenanceLogs).where(
+        and(eq(maintenanceLogs.userId, userId), eq(maintenanceLogs.isCompleted, true))
+      );
+      return Response.json({ success: true });
+    }
 
     if (!id || !userId) {
       return Response.json({ error: 'id and userId required' }, { status: 400 });
@@ -97,20 +110,68 @@ export async function DELETE(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, userId, nextAlertDate, recurringInterval, customTitle } = body;
+    const { id, userId, nextAlertDate, recurringInterval, customTitle, isCompleted } = body;
 
     if (!id || !userId) {
       return Response.json({ error: 'id and userId required' }, { status: 400 });
     }
 
+    // 1. 現在のレコードを取得 (繰り返し処理の判定用)
+    const existing = await db
+      .select()
+      .from(maintenanceLogs)
+      .where(and(eq(maintenanceLogs.id, id), eq(maintenanceLogs.userId, userId)))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return Response.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    const current = existing[0];
+    const becomingCompleted = isCompleted === true && current.isCompleted === false;
+
+    // 2. 更新データの作成
     const updateData: any = {};
     if (nextAlertDate !== undefined) updateData.nextAlertDate = nextAlertDate;
     if (recurringInterval !== undefined) updateData.recurringInterval = recurringInterval;
     if (customTitle !== undefined) updateData.customTitle = customTitle;
+    if (isCompleted !== undefined) {
+      updateData.isCompleted = isCompleted;
+      updateData.completedAt = isCompleted ? new Date() : null;
+    }
 
     await db.update(maintenanceLogs)
       .set(updateData)
       .where(and(eq(maintenanceLogs.id, id), eq(maintenanceLogs.userId, userId)));
+
+    // 3. 繰り返し設定に基づく次回予定の自動作成
+    if (becomingCompleted && current.recurringInterval && current.recurringInterval !== 'none') {
+      const baseDate = new Date(current.nextAlertDate || new Date());
+      const now = new Date();
+      // 基準日が過去の場合は今日を基準にする
+      const referenceDate = baseDate < now ? now : baseDate;
+      const nextDate = new Date(referenceDate);
+
+      switch (current.recurringInterval) {
+        case '1m': nextDate.setMonth(nextDate.getMonth() + 1); break;
+        case '3m': nextDate.setMonth(nextDate.getMonth() + 3); break;
+        case '6m': nextDate.setMonth(nextDate.getMonth() + 6); break;
+        case '1y': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
+      }
+
+      const nextAlertDateStr = nextDate.toISOString().split('T')[0];
+
+      await db.insert(maintenanceLogs).values({
+        userId: current.userId,
+        itemId: current.itemId,
+        maintenanceType: current.maintenanceType,
+        customTitle: current.customTitle,
+        lineType: current.lineType,
+        recurringInterval: current.recurringInterval,
+        nextAlertDate: nextAlertDateStr,
+        isCompleted: false,
+      });
+    }
 
     return Response.json({ success: true });
   } catch (err) {

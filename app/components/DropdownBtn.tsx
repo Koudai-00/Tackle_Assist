@@ -36,8 +36,10 @@ export default function DropdownBtn({ options, selectedValue, onSelect, placehol
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>{label || '項目を選択'}</Text>
-                  <TouchableOpacity onPress={() => setVisible(false)} style={{ padding: 4 }}>
-                    <X color={Colors.dark.icon} size={24} />
+                  <TouchableOpacity onPress={() => setVisible(false)} style={{ padding: 12 }}>
+                    <View pointerEvents="none">
+                      <X color={Colors.dark.icon} size={24} />
+                    </View>
                   </TouchableOpacity>
                 </View>
                 <FlatList

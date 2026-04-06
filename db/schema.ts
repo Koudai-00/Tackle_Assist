@@ -87,6 +87,8 @@ export const maintenanceLogs = pgTable('maintenance_logs', {
   lineType: varchar('line_type', { length: 100 }), // PE, Fluoro etc.
   recurringInterval: varchar('recurring_interval', { length: 50 }), // 繰り返し設定(none, 1m, 6m, 1y等)
   nextAlertDate: date('next_alert_date'), // アラート日
+  isCompleted: boolean('is_completed').default(false).notNull(), // 完了フラグ
+  completedAt: timestamp('completed_at'), // 完了日時
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

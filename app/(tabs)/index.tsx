@@ -3,9 +3,10 @@ import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator, 
 import { useFocusEffect, useRouter, Tabs, Link } from 'expo-router';
 import { Colors } from '../../constants/theme';
 import { useIdentity } from '../../hooks/useIdentity';
-import { ShieldAlert, Plus, ShieldCheck, Calendar as CalendarIcon, List as ListIcon, Backpack, CircleCheck as CheckCircle2, ChevronRight, Info, Settings, User, MoreVertical, Edit3, Trash2, Bell, Clock } from 'lucide-react-native';
+import { ShieldAlert, Plus, ShieldCheck, Calendar as CalendarIcon, List as ListIcon, Backpack, CircleCheck as CheckCircle2, ChevronRight, Info, Settings, User, MoreVertical, Edit3, Trash2, Bell, Clock, Square, CheckSquare, ChevronUp, ChevronDown } from 'lucide-react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AdCard from '../components/AdCard';
 
 LocaleConfig.locales['ja'] = {
   monthNames: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
@@ -19,6 +20,12 @@ LocaleConfig.defaultLocale = 'ja';
 export default function DashboardScreen() {
   const router = useRouter();
   const { uuid } = useIdentity();
+  const [activeTrips, setActiveTrips] = useState<any[]>([]);
+  const [completedTrips, setCompletedTrips] = useState<any[]>([]);
+  const [completeTripsExpanded, setCompleteTripsExpanded] = useState(false);
+  const [activeMaintLogs, setActiveMaintLogs] = useState<any[]>([]);
+  const [completedMaintLogs, setCompletedMaintLogs] = useState<any[]>([]);
+  const [completeMaintExpanded, setCompleteMaintExpanded] = useState(false);
   const [maintLogs, setMaintLogs] = useState<any[]>([]);
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,14 +59,18 @@ export default function DashboardScreen() {
 
       try {
         const mData = JSON.parse(mText);
-        if (mData.logs) setMaintLogs(mData.logs);
+        if (mData.activeLogs) setActiveMaintLogs(mData.activeLogs || []);
+        if (mData.completedLogs) setCompletedMaintLogs(mData.completedLogs || []);
+        if (mData.logs) setMaintLogs(mData.logs || []);
       } catch {
         console.warn("Maintenance response is not JSON:", mText.substring(0, 200));
       }
 
       try {
         const tData = JSON.parse(tText);
-        if (tData.trips) setTrips(tData.trips);
+        if (tData.activeTrips) setActiveTrips(tData.activeTrips || []);
+        if (tData.completedTrips) setCompletedTrips(tData.completedTrips || []);
+        if (tData.trips) setTrips(tData.trips || []);
       } catch {
         console.warn("Trips response is not JSON:", tText.substring(0, 200));
       }
@@ -72,6 +83,76 @@ export default function DashboardScreen() {
 
   useFocusEffect(useCallback(() => { fetchData(); }, [uuid]));
 
+  const toggleMaintStatus = async (item: any) => {
+    const isNowCompleting = !item.isCompleted;
+    try {
+      const baseUrl = require('@/utils/api').getBaseUrl();
+      const res = await fetch(`${baseUrl}/api/maintenance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: item.id,
+          userId: uuid,
+          isCompleted: isNowCompleting
+        })
+      });
+      if (res.ok) {
+        if (isNowCompleting && item.recurringInterval !== 'none') {
+          Alert.alert('完了', 'メンテナンスを記録しました。次回のアラートを自動作成しました。');
+        }
+        fetchData();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const clearCompletedMaint = async () => {
+    const doClear = async () => {
+      try {
+        const baseUrl = require('@/utils/api').getBaseUrl();
+        const res = await fetch(`${baseUrl}/api/maintenance`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: uuid, clearCompleted: true })
+        });
+        if (res.ok) fetchData();
+      } catch (e) { console.error(e); }
+    };
+
+    if (Platform.OS === 'web') {
+      if (confirm('完了済みのアラートをすべて削除しますか？')) doClear();
+    } else {
+      Alert.alert('確認', '完了済みのアラートをすべて削除しますか？', [
+        { text: 'キャンセル', style: 'cancel' },
+        { text: '削除', style: 'destructive', onPress: doClear }
+      ]);
+    }
+  };
+
+  const clearCompletedTrips = async () => {
+    const doClear = async () => {
+      try {
+        const baseUrl = require('@/utils/api').getBaseUrl();
+        const res = await fetch(`${baseUrl}/api/trips`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: uuid, clearCompleted: true })
+        });
+        if (res.ok) fetchData();
+      } catch (e) { console.error(e); }
+    };
+
+    if (Platform.OS === 'web') {
+      if (confirm('完了済みの釣行準備をすべて削除しますか？')) doClear();
+    } else {
+      Alert.alert('確認', '完了済みの釣行準備をすべて削除しますか？', [
+        { text: 'キャンセル', style: 'cancel' },
+        { text: '削除', style: 'destructive', onPress: doClear }
+      ]);
+    }
+  };
+
   const renderMaintItem = (item: any) => {
     if (!item.nextAlertDate) return null;
     const nextAlert = new Date(item.nextAlertDate);
@@ -80,17 +161,29 @@ export default function DashboardScreen() {
     const isWarning = diffDays <= 14;
 
     return (
-      <TouchableOpacity key={item.id} style={[styles.card, isWarning && styles.cardWarning]} onPress={() => router.push({ pathname: '/maintenance-edit', params: { id: item.id } })}>
-        <View style={styles.cardIcon}>
-          {isWarning ? <ShieldAlert color={Colors.dark.danger} size={28} /> : <ShieldCheck color={Colors.dark.secondary} size={28} />}
-        </View>
-        <View style={styles.cardContent}>
-          <Text style={styles.itemName}>{item.itemName || 'タックル指定なし'}</Text>
-          <Text style={styles.maintType}>{item.maintenanceType === 'line_change' ? 'ライン巻き替え' : 'メンテナンス'}</Text>
-          <Text style={[styles.dateText, isWarning && styles.dateTextWarning]}>次回推奨: {item.nextAlertDate}</Text>
-        </View>
+      <View key={item.id} style={[styles.card, isWarning && !item.isCompleted && styles.cardWarning, item.isCompleted && styles.cardCompleted]}>
+        <TouchableOpacity onPress={() => toggleMaintStatus(item)} style={styles.checkArea}>
+          <View pointerEvents="none">
+            {item.isCompleted ? (
+              <CheckSquare color={Colors.dark.secondary} size={24} />
+            ) : (
+              <Square color={Colors.dark.icon} size={24} />
+            )}
+          </View>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.cardContent} onPress={() => router.push({ pathname: '/maintenance-edit', params: { id: item.id, ...item } })}>
+          <Text style={[styles.itemName, item.isCompleted && styles.itemNameCompleted]}>{item.itemName || 'タックル指定なし'}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.maintType}>{item.maintenanceType === 'line_change' ? 'ライン巻き替え' : 'メンテナンス'}</Text>
+            {item.recurringInterval !== 'none' && !item.isCompleted && (
+              <View style={styles.recurringBadge}><Clock size={10} color={Colors.dark.primary} /><Text style={styles.recurringBadgeText}>{item.recurringInterval}</Text></View>
+            )}
+          </View>
+          <Text style={[styles.dateText, isWarning && !item.isCompleted && styles.dateTextWarning]}>アラート日: {item.nextAlertDate}</Text>
+        </TouchableOpacity>
         <ChevronRight color={Colors.dark.icon} size={20} />
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -209,15 +302,19 @@ export default function DashboardScreen() {
       <Tabs.Screen options={{
         headerLeft: () => (
           <Link href="/transfer" asChild>
-            <TouchableOpacity style={{ marginLeft: 16 }}>
-              <User color={Colors.dark.text} size={28} />
+            <TouchableOpacity style={{ marginLeft: 4, padding: 12 }}>
+              <View pointerEvents="none">
+                <User color={Colors.dark.text} size={28} />
+              </View>
             </TouchableOpacity>
           </Link>
         ),
         headerRight: () => (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity onPress={() => setViewMode(v => v === 'list' ? 'calendar' : 'list')} style={{ paddingRight: 16 }}>
-              {viewMode === 'list' ? <CalendarIcon color={Colors.dark.primary} size={24} /> : <ListIcon color={Colors.dark.primary} size={24} />}
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 4 }}>
+            <TouchableOpacity onPress={() => setViewMode(v => v === 'list' ? 'calendar' : 'list')} style={{ padding: 12 }}>
+              <View pointerEvents="none">
+                {viewMode === 'list' ? <CalendarIcon color={Colors.dark.primary} size={24} /> : <ListIcon color={Colors.dark.primary} size={24} />}
+              </View>
             </TouchableOpacity>
           </View>
         ),
@@ -227,23 +324,71 @@ export default function DashboardScreen() {
       {viewMode === 'list' ? (
         <ScrollView contentContainerStyle={styles.listContainer}>
           {/* アクティブな釣行予定 */}
-          {trips.length > 0 && (
+          {activeTrips.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>釣行パッキング</Text>
-              {trips.map(renderTripItem)}
+              {activeTrips.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  {index > 0 && index % 5 === 0 && <AdCard />}
+                  {renderTripItem(item)}
+                </React.Fragment>
+              ))}
+            </View>
+          )}
+
+          {/* 完了済みの釣行 */}
+          {completedTrips.length > 0 && (
+            <View style={styles.completedSection}>
+              <TouchableOpacity style={styles.completedHeader} onPress={() => setCompleteTripsExpanded(!completeTripsExpanded)}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} pointerEvents="none">
+                  {completeTripsExpanded ? <ChevronUp color={Colors.dark.icon} size={20} /> : <ChevronDown color={Colors.dark.icon} size={20} />}
+                  <Text style={styles.completedTitle}>完了済みの釣行 ({completedTrips.length})</Text>
+                </View>
+                <TouchableOpacity onPress={clearCompletedTrips} style={styles.clearBtn}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} pointerEvents="none">
+                    <Trash2 color={Colors.dark.danger} size={16} />
+                    <Text style={styles.clearBtnText}>整理</Text>
+                  </View>
+                </TouchableOpacity>
+              </TouchableOpacity>
+              {completeTripsExpanded && completedTrips.map(renderTripItem)}
             </View>
           )}
 
           {/* メンテナンスアラート */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>メンテナンスアラート</Text>
-            {maintLogs.length > 0 ? maintLogs.map(renderMaintItem) : (
+            {activeMaintLogs.length > 0 ? activeMaintLogs.map((item, index) => (
+              <React.Fragment key={item.id}>
+                {index > 0 && index % 5 === 0 && <AdCard />}
+                {renderMaintItem(item)}
+              </React.Fragment>
+            )) : (
               <View style={styles.emptyCard}>
                 <ShieldCheck color={Colors.dark.icon} size={40} />
                 <Text style={styles.emptyText}>アラートはありません</Text>
               </View>
             )}
           </View>
+
+          {/* 完了済みセクション */}
+          {completedMaintLogs.length > 0 && (
+            <View style={styles.completedSection}>
+              <TouchableOpacity style={styles.completedHeader} onPress={() => setCompleteMaintExpanded(!completeMaintExpanded)}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} pointerEvents="none">
+                  {completeMaintExpanded ? <ChevronUp color={Colors.dark.icon} size={20} /> : <ChevronDown color={Colors.dark.icon} size={20} />}
+                  <Text style={styles.completedTitle}>完了済み ({completedMaintLogs.length})</Text>
+                </View>
+                <TouchableOpacity onPress={clearCompletedMaint} style={styles.clearBtn}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} pointerEvents="none">
+                    <Trash2 color={Colors.dark.danger} size={16} />
+                    <Text style={styles.clearBtnText}>整理</Text>
+                  </View>
+                </TouchableOpacity>
+              </TouchableOpacity>
+              {completeMaintExpanded && completedMaintLogs.map(renderMaintItem)}
+            </View>
+          )}
         </ScrollView>
       ) : (
         <View style={{ flex: 1 }}>
@@ -277,7 +422,9 @@ export default function DashboardScreen() {
       )}
 
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/maintenance-add')}>
-        <Plus color="#ffffff" size={32} />
+        <View pointerEvents="none">
+          <Plus color="#ffffff" size={32} />
+        </View>
       </TouchableOpacity>
 
       {/* 編集モーダル */}
@@ -335,9 +482,9 @@ export default function DashboardScreen() {
               <DateTimePicker
                 value={editAlertAt}
                 mode="date"
-                display="default"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={(event, date) => {
-                  setShowDatePicker(false);
+                  setShowDatePicker(Platform.OS === 'ios');
                   if (date) {
                     const newDate = new Date(editAlertAt);
                     newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
@@ -413,7 +560,19 @@ const styles = StyleSheet.create({
   selectedDateTitle: { color: Colors.dark.icon, fontWeight: 'bold', marginBottom: 16 },
   noPlanText: { color: Colors.dark.icon, textAlign: 'center', marginTop: 30 },
   
-  fab: { position: 'absolute', right: 20, bottom: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.dark.primary, justifyContent: 'center', alignItems: 'center', shadowColor: '#0ea5e9', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8 },
+  fab: { position: 'absolute', right: 20, bottom: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.dark.primary, justifyContent: 'center', alignItems: 'center', shadowColor: '#0ea5e9', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8, zIndex: 999 },
+
+  checkArea: { padding: 12, marginLeft: -8, marginRight: 0 },
+  cardCompleted: { opacity: 0.5, backgroundColor: 'rgba(0,0,0,0.1)' },
+  itemNameCompleted: { color: Colors.dark.icon, textDecorationLine: 'line-through' },
+  recurringBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(14, 165, 233, 0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  recurringBadgeText: { color: Colors.dark.primary, fontSize: 10, fontWeight: 'bold' },
+
+  completedSection: { marginTop: 8, marginBottom: 32 },
+  completedHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 4 },
+  completedTitle: { fontSize: 14, fontWeight: 'bold', color: Colors.dark.icon },
+  clearBtn: { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, padding: 8 },
+  clearBtnText: { color: Colors.dark.danger, fontSize: 12, fontWeight: 'bold' },
 
   // モーダル
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },

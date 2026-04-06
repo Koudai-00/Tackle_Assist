@@ -23,8 +23,7 @@ export async function GET(request: Request) {
 
       return Response.json({ trip, items });
     } else {
-      // 一覧取得 (進捗状況付き)
-      const trips = await db.select({
+      const allTrips = await db.select({
         id: tripChecklists.id,
         name: tripChecklists.name,
         tripDate: tripChecklists.tripDate,
@@ -39,7 +38,10 @@ export async function GET(request: Request) {
       .where(eq(tripChecklists.userId, userId))
       .groupBy(tripChecklists.id);
 
-      return Response.json({ trips });
+      const activeTrips = allTrips.filter(t => !t.isCompleted);
+      const completedTrips = allTrips.filter(t => t.isCompleted);
+
+      return Response.json({ activeTrips, completedTrips });
     }
   } catch (err) {
     console.error("Trips GET Error", err);
@@ -132,6 +134,23 @@ export async function DELETE(request: Request) {
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
+    const body = await request.json().catch(() => ({}));
+    const { userId, clearCompleted } = body;
+
+    if (clearCompleted && userId) {
+      // 完了済みの釣行を一括削除
+      const completedTripsToDelete = await db.select({ id: tripChecklists.id })
+        .from(tripChecklists)
+        .where(and(eq(tripChecklists.userId, userId), eq(tripChecklists.isCompleted, true)));
+      
+      if (completedTripsToDelete.length > 0) {
+        const ids = completedTripsToDelete.map(t => t.id);
+        await db.delete(tripChecklistItems).where(sql`${tripChecklistItems.tripChecklistId} IN ${ids}`);
+        await db.delete(tripChecklists).where(sql`${tripChecklists.id} IN ${ids}`);
+      }
+      return Response.json({ success: true });
+    }
+
     if (!id) return Response.json({ error: 'id is required' }, { status: 400 });
 
     await db.delete(tripChecklistItems).where(eq(tripChecklistItems.tripChecklistId, id));
