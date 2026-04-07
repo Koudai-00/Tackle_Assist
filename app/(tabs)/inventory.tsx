@@ -217,21 +217,21 @@ export default function InventoryScreen() {
     <View style={styles.container}>
       <Tabs.Screen 
         options={{
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.push('/location-tags')} style={{ marginLeft: 4, padding: 12 }}>
+              <View pointerEvents="none">
+                <Settings color={Colors.dark.text} size={24} />
+              </View>
+            </TouchableOpacity>
+          ),
           headerRight: () => (
-            <View style={{ flexDirection: 'row', gap: 8, paddingRight: 4 }}>
-              <TouchableOpacity onPress={() => router.push('/location-tags')} style={{ padding: 12 }}>
+            <Link href="/shopping" asChild>
+              <TouchableOpacity style={{ marginRight: 4, padding: 12 }}>
                 <View pointerEvents="none">
-                  <Settings color={Colors.dark.text} size={24} />
+                  <ShoppingCart color={Colors.dark.text} size={24} />
                 </View>
               </TouchableOpacity>
-              <Link href="/shopping" asChild>
-                <TouchableOpacity style={{ padding: 12 }}>
-                  <View pointerEvents="none">
-                    <ShoppingCart color={Colors.dark.text} size={24} />
-                  </View>
-                </TouchableOpacity>
-              </Link>
-            </View>
+            </Link>
           )
         }} 
       />

@@ -15,18 +15,18 @@ export const Colors = {
     tabIconSelected: '#0ea5e9',
   },
   dark: {
-    // Tackle Assist Premium Dark Marine Theme
-    text: '#f8fafc',
-    background: '#0f172a', // Deep Slate / Sea Bottom
-    surface: '#1e293b', // Elevated Container
-    primary: '#0ea5e9', // Ocean Blue / Accent
-    secondary: '#10b981', // Safe / Success
-    accent: '#f59e0b', // Alert / Warning
-    danger: '#ef4444', // Delete / Error
-    border: '#334155', // Subtle divider
-    icon: '#94a3b8',
-    tabIconDefault: '#64748b',
-    tabIconSelected: '#0ea5e9',
+    // Tackle Assist Clean Modern Theme (Overriding dark properties for global app change)
+    text: '#1e293b', // Dark Slate for crisp readability
+    background: '#f8fafc', // Very subtle off-white background
+    surface: '#ffffff', // Clean white cards
+    primary: '#1dc6cc', // Adjusted Teal/Cyan Accent for better visibility
+    secondary: '#10b981', // Success
+    accent: '#f59e0b', // Warning
+    danger: '#ef4444', // Danger
+    border: '#e2e8f0', // Soft visible border
+    icon: '#64748b', // Slate-500 neutral icons
+    tabIconDefault: '#94a3b8',
+    tabIconSelected: '#1dc6cc',
   },
 };
 
