@@ -10,6 +10,7 @@ export default function ShoppingListScreen() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newItemName, setNewItemName] = useState('');
+  const [newItemQuantity, setNewItemQuantity] = useState('1');
   const [isAdding, setIsAdding] = useState(false);
   const [purchasedExpanded, setPurchasedExpanded] = useState(false);
 
@@ -129,10 +130,11 @@ export default function ShoppingListScreen() {
       const res = await fetch(`${baseUrl}/api/shopping`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: uuid, itemName: newItemName.trim(), quantity: 1 })
+        body: JSON.stringify({ userId: uuid, itemName: newItemName.trim(), quantity: parseInt(newItemQuantity, 10) || 1 })
       });
       if (res.ok) {
         setNewItemName('');
+        setNewItemQuantity('1');
         fetchShoppingList();
       }
     } catch (e) {
@@ -229,16 +231,18 @@ export default function ShoppingListScreen() {
   const renderShoppingItem = (item: any) => (
     <View key={item.id} style={[styles.card, item.isPurchased && styles.cardPurchased]}>
       <TouchableOpacity onPress={() => togglePurchased(item)} style={styles.checkArea}>
-        {item.isPurchased ? (
-          <CheckSquare color={Colors.dark.secondary} size={24} />
-        ) : (
-          <Square color={Colors.dark.icon} size={24} />
-        )}
+        <View pointerEvents="none">
+          {item.isPurchased ? (
+            <CheckSquare color={Colors.dark.secondary} size={24} />
+          ) : (
+            <Square color={Colors.dark.icon} size={24} />
+          )}
+        </View>
       </TouchableOpacity>
       
       <TouchableOpacity style={styles.itemInfo} onPress={() => openEditModal(item)}>
         <View style={styles.itemTitleRow}>
-          <Text style={[styles.itemName, item.isPurchased && styles.itemNamePurchased]} numberOfLines={1}>
+          <Text style={[styles.itemName, item.isPurchased && styles.itemNamePurchased, { flexShrink: 1 }]} numberOfLines={1}>
             {item.itemName}
           </Text>
           {item.itemId ? (
@@ -255,10 +259,10 @@ export default function ShoppingListScreen() {
 
       <View style={styles.itemActions}>
         <TouchableOpacity onPress={() => openEditModal(item)} style={styles.iconBtn}>
-          <Edit3 color={Colors.dark.icon} size={18} />
+          <View pointerEvents="none"><Edit3 color={Colors.dark.icon} size={18} /></View>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDeleteItem(item.id, item.itemName)} style={styles.iconBtn}>
-          <Trash2 color={Colors.dark.icon} size={18} />
+          <View pointerEvents="none"><Trash2 color={Colors.dark.icon} size={18} /></View>
         </TouchableOpacity>
       </View>
     </View>
@@ -285,12 +289,23 @@ export default function ShoppingListScreen() {
           onSubmitEditing={handleAddItem}
           returnKeyType="done"
         />
+        <View style={styles.addQtyPicker}>
+          <TouchableOpacity onPress={() => setNewItemQuantity(String(Math.max(1, parseInt(newItemQuantity, 10) - 1)))} style={styles.addQtyBtn}>
+            <View pointerEvents="none"><Minus color={Colors.dark.primary} size={16} /></View>
+          </TouchableOpacity>
+          <Text style={styles.addQtyText}>{newItemQuantity}</Text>
+          <TouchableOpacity onPress={() => setNewItemQuantity(String(parseInt(newItemQuantity, 10) + 1))} style={styles.addQtyBtn}>
+            <View pointerEvents="none"><Plus color={Colors.dark.primary} size={16} /></View>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
           style={[styles.addBtn, (!newItemName.trim() || isAdding) && { opacity: 0.4 }]}
           onPress={handleAddItem}
           disabled={!newItemName.trim() || isAdding}
         >
-          {isAdding ? <ActivityIndicator color="#fff" size="small" /> : <Plus color="#fff" size={22} />}
+          <View pointerEvents="none">
+            {isAdding ? <ActivityIndicator color="#fff" size="small" /> : <Plus color="#fff" size={22} />}
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -337,7 +352,7 @@ export default function ShoppingListScreen() {
                 <Text style={styles.inputLabel}>買う数</Text>
                 <View style={styles.qtyPicker}>
                   <TouchableOpacity onPress={() => setEditQuantity(String(Math.max(1, parseInt(editQuantity, 10) - 1)))} style={styles.qtyBtn}>
-                    <Minus color={Colors.dark.primary} size={20} />
+                    <View pointerEvents="none"><Minus color={Colors.dark.primary} size={20} /></View>
                   </TouchableOpacity>
                   <TextInput 
                     style={styles.qtyInput} 
@@ -346,7 +361,7 @@ export default function ShoppingListScreen() {
                     onChangeText={setEditQuantity} 
                   />
                   <TouchableOpacity onPress={() => setEditQuantity(String(parseInt(editQuantity, 10) + 1))} style={styles.qtyBtn}>
-                    <Plus color={Colors.dark.primary} size={20} />
+                    <View pointerEvents="none"><Plus color={Colors.dark.primary} size={20} /></View>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -439,7 +454,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.dark.background },
 
   addSection: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, gap: 10, borderBottomWidth: 1, borderColor: Colors.dark.border },
-  addInput: { flex: 1, backgroundColor: Colors.dark.surface, color: Colors.dark.text, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.border, fontSize: 16 },
+  addInput: { flex: 1, backgroundColor: Colors.dark.surface, color: Colors.dark.text, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.border, fontSize: 16 },
+  addQtyPicker: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.surface, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.border },
+  addQtyBtn: { padding: 12 },
+  addQtyText: { color: Colors.dark.text, fontSize: 16, fontWeight: 'bold', minWidth: 20, textAlign: 'center' },
   addBtn: { width: 48, height: 48, backgroundColor: Colors.dark.primary, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
 
   listContainer: { padding: 16, paddingBottom: 40 },

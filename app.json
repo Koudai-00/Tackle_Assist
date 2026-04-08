@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Tackle_Assist",
+    "name": "Tackle Assist",
     "slug": "Tackle_Assist",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,6 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.k2project.tackleassist",
       "infoPlist": {
+        "NSCameraUsageDescription": "タックル（釣具）の写真を撮影して登録するためにカメラを使用します。",
+        "NSPhotoLibraryUsageDescription": "スマートフォンに保存されているタックル（釣具）の画像を選択して登録するために写真ライブラリにアクセスします。",
         "NSUserTrackingUsageDescription": "パーソナライズされた広告を表示するために使用します",
         "SKAdNetworkItems": [
           {

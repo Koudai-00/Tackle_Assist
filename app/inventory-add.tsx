@@ -221,7 +221,9 @@ export default function InventoryAddModal() {
           onChangeText={setName}
         />
         <TouchableOpacity style={styles.scanBtn} onPress={openScanner} disabled={isApiLoading}>
-          {isApiLoading ? <ActivityIndicator color="#fff" /> : <ScanBarcode color="#fff" size={24} />}
+          <View pointerEvents="none">
+            {isApiLoading ? <ActivityIndicator color="#fff" /> : <ScanBarcode color="#fff" size={24} />}
+          </View>
         </TouchableOpacity>
       </View>
 

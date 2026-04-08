@@ -240,10 +240,10 @@ export default function PackingScreen() {
         data={filteredSets}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
-          <>
+          <React.Fragment key={item.id}>
             {index > 0 && index % 5 === 0 && <AdCard />}
             {renderSet({ item })}
-          </>
+          </React.Fragment>
         )}
         contentContainerStyle={styles.listContainer}
         ListHeaderComponent={

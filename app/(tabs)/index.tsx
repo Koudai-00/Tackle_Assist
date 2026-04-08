@@ -206,8 +206,10 @@ export default function DashboardScreen() {
             <Text style={styles.progressText}>{item.packedItems} / {item.totalItems}</Text>
           </View>
         </View>
-        <TouchableOpacity style={{ padding: 8 }} onPress={(e) => { e.stopPropagation(); openEditModal(item); }}>
-          <MoreVertical color={Colors.dark.icon} size={20} />
+        <TouchableOpacity style={{ padding: 12, margin: -4 }} onPress={(e) => { e.stopPropagation(); openEditModal(item); }}>
+          <View pointerEvents="none">
+            <MoreVertical color={Colors.dark.icon} size={24} />
+          </View>
         </TouchableOpacity>
       </TouchableOpacity>
     );
@@ -433,8 +435,10 @@ export default function DashboardScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>準備リストの編集</Text>
-              <TouchableOpacity onPress={() => handleDeleteTrip()}>
-                <Trash2 color={Colors.dark.danger} size={20} />
+              <TouchableOpacity onPress={() => handleDeleteTrip()} style={{ padding: 8, margin: -8 }}>
+                <View pointerEvents="none">
+                  <Trash2 color={Colors.dark.danger} size={20} />
+                </View>
               </TouchableOpacity>
             </View>
             

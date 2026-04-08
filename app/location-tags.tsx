@@ -102,7 +102,7 @@ export default function LocationTagsModal() {
         <Text style={styles.tagName}>{item.name}</Text>
       </View>
       <TouchableOpacity onPress={() => handleDeleteTag(item.id, item.name)} style={styles.deleteBtn}>
-        <Trash2 color={Colors.dark.danger} size={20} />
+        <View pointerEvents="none"><Trash2 color={Colors.dark.danger} size={20} /></View>
       </TouchableOpacity>
     </View>
   );
@@ -124,7 +124,9 @@ export default function LocationTagsModal() {
             onPress={handleAddTag}
             disabled={!newTag.trim() || isSubmitting}
           >
-            {isSubmitting ? <ActivityIndicator color="#fff" size="small" /> : <Plus color="#fff" size={24} />}
+            <View pointerEvents="none">
+              {isSubmitting ? <ActivityIndicator color="#fff" size="small" /> : <Plus color="#fff" size={24} />}
+            </View>
           </TouchableOpacity>
         </View>
       </View>
