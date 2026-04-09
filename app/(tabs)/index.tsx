@@ -158,10 +158,16 @@ export default function DashboardScreen() {
     const nextAlert = new Date(item.nextAlertDate);
     const today = new Date();
     const diffDays = Math.ceil((nextAlert.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    const isWarning = diffDays <= 14;
+    const isDanger = diffDays <= 0;
+    const isWarning = diffDays <= 14 && diffDays > 0;
 
     return (
-      <View key={item.id} style={[styles.card, isWarning && !item.isCompleted && styles.cardWarning, item.isCompleted && styles.cardCompleted]}>
+      <View key={item.id} style={[
+        styles.card, 
+        isDanger && !item.isCompleted && styles.cardDanger,
+        isWarning && !item.isCompleted && styles.cardWarning, 
+        item.isCompleted && styles.cardCompleted
+      ]}>
         <TouchableOpacity onPress={() => toggleMaintStatus(item)} style={styles.checkArea}>
           <View pointerEvents="none">
             {item.isCompleted ? (
@@ -180,7 +186,11 @@ export default function DashboardScreen() {
               <View style={styles.recurringBadge}><Clock size={10} color={Colors.dark.primary} /><Text style={styles.recurringBadgeText}>{item.recurringInterval}</Text></View>
             )}
           </View>
-          <Text style={[styles.dateText, isWarning && !item.isCompleted && styles.dateTextWarning]}>アラート日: {item.nextAlertDate}</Text>
+          <Text style={[
+            styles.dateText, 
+            isDanger && !item.isCompleted && styles.dateTextDanger,
+            isWarning && !item.isCompleted && styles.dateTextWarning
+          ]}>アラート日: {item.nextAlertDate}</Text>
         </TouchableOpacity>
         <ChevronRight color={Colors.dark.icon} size={20} />
       </View>
@@ -541,7 +551,8 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: Colors.dark.icon, marginBottom: 12, marginLeft: 4 },
 
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.surface, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: Colors.dark.border },
-  cardWarning: { borderColor: Colors.dark.danger, backgroundColor: 'rgba(239, 68, 68, 0.05)' },
+  cardDanger: { borderColor: Colors.dark.danger, backgroundColor: 'rgba(239, 68, 68, 0.05)' },
+  cardWarning: { borderColor: Colors.dark.accent, backgroundColor: 'rgba(245, 158, 11, 0.05)' },
   cardTrip: { borderColor: Colors.dark.primary + '44' },
   cardTripToday: { borderColor: Colors.dark.primary, borderWidth: 1.5 },
   
@@ -550,7 +561,8 @@ const styles = StyleSheet.create({
   itemName: { fontSize: 17, fontWeight: 'bold', color: Colors.dark.text, marginBottom: 2 },
   maintType: { fontSize: 13, color: Colors.dark.primary, marginBottom: 4 },
   dateText: { fontSize: 13, color: Colors.dark.icon },
-  dateTextWarning: { color: Colors.dark.danger, fontWeight: 'bold' },
+  dateTextDanger: { color: Colors.dark.danger, fontWeight: 'bold' },
+  dateTextWarning: { color: Colors.dark.accent, fontWeight: 'bold' },
 
   tripDateLabel: { fontSize: 13, color: Colors.dark.icon, marginBottom: 6 },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

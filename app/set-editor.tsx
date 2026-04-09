@@ -56,6 +56,7 @@ export default function SetEditorScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [selectedListVisible, setSelectedListVisible] = useState(false);
 
   const fetchSetDetail = async () => {
     if (!id || !uuid) return;
@@ -295,6 +296,50 @@ export default function SetEditorScreen() {
               );
             }}
           />
+
+          {selectedItems.length > 0 && !selectedListVisible && (
+            <TouchableOpacity 
+              style={styles.selectedFab} 
+              onPress={() => setSelectedListVisible(true)}
+            >
+              <Text style={styles.selectedFabText}>選択中 ({selectedItems.length})</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* 選択中アイテム一覧のオーバーレイ */}
+          {selectedListVisible && (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end', zIndex: 10 }]}>
+              <View style={styles.selectedModalContent}>
+                <View style={[styles.modalHeader, { marginTop: 16 }]}>
+                  <Text style={styles.modalTitle}>選択中のアイテム ({selectedItems.length})</Text>
+                  <TouchableOpacity onPress={() => setSelectedListVisible(false)}>
+                    <Text style={{ color: Colors.dark.primary, fontSize: 16, fontWeight: 'bold' }}>閉じる</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                {selectedItems.length === 0 ? (
+                  <View style={{ padding: 40, alignItems: 'center' }}>
+                    <Text style={{ color: Colors.dark.icon }}>選択中のアイテムはありません</Text>
+                  </View>
+                ) : (
+                  <FlatList
+                    data={selectedItems}
+                    keyExtractor={it => it.itemId}
+                    renderItem={({ item }) => (
+                      <View style={styles.pickerItem}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.pickerItemName}>{item.name}</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => removeItem(item.itemId)} style={styles.deselectBtn}>
+                          <Text style={styles.deselectBtnText}>解除</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  />
+                )}
+              </View>
+            </View>
+          )}
         </View>
       </Modal>
     </View>
@@ -334,5 +379,11 @@ const styles = StyleSheet.create({
   pickerItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderColor: Colors.dark.border },
   pickerItemActive: { backgroundColor: 'rgba(14, 165, 233, 0.05)' },
   pickerItemName: { color: Colors.dark.text, fontSize: 16, fontWeight: '500' },
-  pickerItemSub: { color: Colors.dark.icon, fontSize: 13, marginTop: 4 }
+  pickerItemSub: { color: Colors.dark.icon, fontSize: 13, marginTop: 4 },
+  
+  selectedFab: { position: 'absolute', right: 20, bottom: 40, backgroundColor: Colors.dark.primary, paddingHorizontal: 20, paddingVertical: 14, borderRadius: 30, shadowColor: '#0ea5e9', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5, zIndex: 5 },
+  selectedFabText: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
+  selectedModalContent: { backgroundColor: Colors.dark.surface, height: '80%', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 20 },
+  deselectBtn: { backgroundColor: 'rgba(239, 68, 68, 0.1)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  deselectBtnText: { color: Colors.dark.danger, fontWeight: 'bold', fontSize: 14 }
 });
