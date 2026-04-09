@@ -182,7 +182,13 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "react-native-google-mobile-ads"
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-1443932725352090~8493747506",
+          "iosAppId": "ca-app-pub-1443932725352090~8766976608"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -192,10 +198,7 @@
       "router": {},
       "eas": {
         "projectId": "cdfd70eb-3ba0-4bda-9016-d4b384ec4756"
-    },
-    "react-native-google-mobile-ads": {
-      "android_app_id": "ca-app-pub-1443932725352090~8493747506",
-      "ios_app_id": "ca-app-pub-1443932725352090~8766976608"
+      }
     }
   }
 }
