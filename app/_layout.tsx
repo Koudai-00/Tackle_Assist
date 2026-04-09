@@ -11,24 +11,8 @@ export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
 
-// AdMob SDK 初期化（ネイティブ環境のみ）
-function initializeAds() {
-  if (Platform.OS === 'web') return;
-  try {
-    const mobileAds = require('react-native-google-mobile-ads').default;
-    mobileAds()
-      .initialize()
-      .then(() => {
-        console.log('AdMob SDK initialized');
-      })
-      .catch((err: any) => {
-        console.log('AdMob init error:', err);
-      });
-  } catch (e) {
-    // Expo Go等ではネイティブモジュール利用不可
-    console.log('AdMob not available (Expo Go?)');
-  }
-}
+import { initializeAds } from '../utils/admob-init';
+
 
 export default function RootLayout() {
   const { isLoading } = useIdentity();
