@@ -5,11 +5,14 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from '../../db/schema';
 import { eq, and, asc, desc, ilike, sql } from 'drizzle-orm';
 import { GoogleGenAI } from '@google/genai';
+import { Resend } from 'resend';
 
 type Bindings = {
   EXPO_PUBLIC_DATABASE_URL: string;
   EXPO_PUBLIC_GEMINI_API_KEY: string;
   EXPO_PUBLIC_YAHOO_CLIENT_ID: string;
+  RESEND_API_KEY: string;
+  RESEND_TO_EMAIL: string;
 };
 
 type Variables = {
@@ -721,6 +724,46 @@ app.get('/inventory/related', async (c) => {
     return c.json({ sets, checklists, shopping, maintenance });
   } catch (err) {
     return c.json({ error: 'Failed' }, 500);
+  }
+});
+
+// ==== Inquiry ====
+app.post('/inquiry', async (c) => {
+  try {
+    const { name, email, type, message } = await c.req.json();
+    const apiKey = c.env.RESEND_API_KEY;
+    const toEmail = c.env.RESEND_TO_EMAIL;
+
+    if (!apiKey || !toEmail) {
+      console.error('Resend environment variables not configured');
+      return c.json({ error: 'Mail server not configured' }, 500);
+    }
+
+    if (!email || !message) {
+      return c.json({ error: 'Email and message are required' }, 400);
+    }
+
+    const resend = new Resend(apiKey);
+    const result = await resend.emails.send({
+      from: 'Tackle Assist <onboarding@resend.dev>',
+      to: [toEmail],
+      subject: `[Tackle Assist] お問い合わせ: ${type || 'その他'}`,
+      text: `アプリから新しいお問い合わせがありました。\n\n` +
+            `■ お名前\n${name || '未入力'}\n\n` +
+            `■ 返信用メールアドレス\n${email}\n\n` +
+            `■ 種別\n${type || '未選択'}\n\n` +
+            `■ お問い合わせ内容\n${message}\n`,
+    });
+
+    if (result.error) {
+      console.error('Resend Error:', result.error);
+      return c.json({ error: 'Failed to send email' }, 500);
+    }
+
+    return c.json({ success: true, id: result.data?.id });
+  } catch (error) {
+    console.error('Inquiry endpoint error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
   }
 });
 

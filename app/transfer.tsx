@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, Platform, S
 import * as SecureStore from 'expo-secure-store';
 import { Colors } from '../constants/theme';
 import { useIdentity } from '../hooks/useIdentity';
-import { SmartphoneNfc, Copy, Upload } from 'lucide-react-native';
+import { SmartphoneNfc, Copy, Upload, Shield, Mail } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, Stack } from 'expo-router';
 
@@ -104,6 +104,20 @@ export default function TransferScreen() {
           <Text style={styles.transferBtnText}>この端末にデータを復元</Text>
         </TouchableOpacity>
       </View>
+
+      <View style={[styles.card, { marginTop: 24 }]}>
+        <Text style={styles.cardTitle}>■ アプリについて</Text>
+
+        <TouchableOpacity style={styles.menuBtn} onPress={() => router.push('/privacy')}>
+          <Shield color={Colors.dark.text} size={20} />
+          <Text style={styles.menuBtnText}>プライバシーポリシー</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuBtn} onPress={() => router.push('/inquiry')}>
+          <Mail color={Colors.dark.text} size={20} />
+          <Text style={styles.menuBtnText}>お問い合わせ</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -123,5 +137,7 @@ const styles = StyleSheet.create({
   copyBtnText: { color: Colors.dark.text, fontWeight: '600' },
   input: { backgroundColor: Colors.dark.background, color: Colors.dark.text, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.border, fontSize: 14, marginBottom: 16 },
   transferBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.dark.accent, paddingVertical: 16, borderRadius: 12, gap: 8 },
-  transferBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
+  transferBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  menuBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dark.background, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: Colors.dark.border, marginBottom: 12, gap: 12 },
+  menuBtnText: { color: Colors.dark.text, fontSize: 15, fontWeight: '600' }
 });
