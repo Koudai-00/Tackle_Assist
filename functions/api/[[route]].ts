@@ -468,6 +468,7 @@ app.post('/gemini', async (c) => {
     const resultObj = JSON.parse(response.text || '{}');
     return c.json({ success: true, recommendation: resultObj });
   } catch (err) {
+    console.error('Gemini error:', err);
     return c.json({ error: 'AIアドバイスの生成に失敗しました' }, 500);
   }
 });
