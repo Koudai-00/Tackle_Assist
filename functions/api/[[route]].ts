@@ -745,9 +745,9 @@ app.post('/inquiry', async (c) => {
 
     const resend = new Resend(apiKey);
     const result = await resend.emails.send({
-      from: 'Tackle Assist <onboarding@resend.dev>',
+      from: 'Fishing Agent <onboarding@resend.dev>',
       to: [toEmail],
-      subject: `[Tackle Assist] お問い合わせ: ${type || 'その他'}`,
+      subject: `[Fishing Agent] お問い合わせ: ${type || 'その他'}`,
       text: `アプリから新しいお問い合わせがありました。\n\n` +
             `■ お名前\n${name || '未入力'}\n\n` +
             `■ 返信用メールアドレス\n${email}\n\n` +

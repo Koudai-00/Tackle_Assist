@@ -3,7 +3,7 @@ import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { Platform } from 'react-native';
 
-const IDENTITY_KEY = 'tackle_assist_user_uuid';
+const IDENTITY_KEY = 'fishing_agent_user_uuid';
 
 /**
  * 初回起動時にUUIDを生成・保存し、次回以降は保存されたものを返す関数

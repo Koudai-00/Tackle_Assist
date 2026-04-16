@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Tackle Assist",
+    "name": "Fishing Agent",
     "slug": "Tackle_Assist",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tackleassist",
+    "scheme": "fishingagent",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.k2project.tackleassist",
+      "bundleIdentifier": "com.k2project.fishingagent",
       "infoPlist": {
         "NSCameraUsageDescription": "タックル（釣具）の写真を撮影して登録するためにカメラを使用します。",
         "NSPhotoLibraryUsageDescription": "スマートフォンに保存されているタックル（釣具）の画像を選択して登録するために写真ライブラリにアクセスします。",
@@ -160,7 +160,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.k2project.tackleassist"
+      "package": "com.k2project.fishingagent"
     },
     "web": {
       "bundler": "metro",

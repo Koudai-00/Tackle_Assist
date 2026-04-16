@@ -24,7 +24,7 @@ export default function PrivacyPolicyScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>1. 情報の取得について</Text>
         <Text style={styles.text}>
-          本アプリ（Tackle Assist）は、サービスの提供および利便性の向上のため、以下の情報を取得・利用します。
+          本アプリ（Fishing Agent）は、サービスの提供および利便性の向上のため、以下の情報を取得・利用します。
         </Text>
         <Text style={styles.bullet}>・カメラおよび写真ライブラリへのアクセス</Text>
         <Text style={styles.text}>

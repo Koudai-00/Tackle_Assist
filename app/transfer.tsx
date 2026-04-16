@@ -7,7 +7,7 @@ import { SmartphoneNfc, Copy, Upload, Shield, Mail } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, Stack } from 'expo-router';
 
-const IDENTITY_KEY = 'tackle_assist_user_uuid';
+const IDENTITY_KEY = 'fishing_agent_user_uuid';
 
 export default function TransferScreen() {
   const router = useRouter();
