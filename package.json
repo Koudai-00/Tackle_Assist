@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "dev": "expo start --web",
+    "dev": "expo start --web --port 5000",
     "start": "expo start",
     "build": "expo export -p web",
     "reset-project": "node ./scripts/reset-project.js",
